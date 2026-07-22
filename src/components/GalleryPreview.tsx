@@ -1,18 +1,14 @@
 import { useEffect, useState } from "react";
 
+import { galleryApi, GalleryItem } from "../api";
 
-type GalleryItem = {
-  id: number;
-  title: string;
-  description: string;
-  image_url: string;
+
+type GalleryPreviewProps = {
+  refreshToken: number;
 };
 
 
-const apiBaseUrl = process.env.REACT_APP_API_BASE_URL ?? "http://localhost:8000";
-
-
-export default function GalleryPreview() {
+export default function GalleryPreview({ refreshToken }: GalleryPreviewProps) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -25,12 +21,7 @@ export default function GalleryPreview() {
         setIsLoading(true);
         setError("");
 
-        const response = await fetch(`${apiBaseUrl}/gallery`, { signal: controller.signal });
-        if (!response.ok) {
-          throw new Error("Unable to load gallery.");
-        }
-
-        const nextItems = (await response.json()) as GalleryItem[];
+        const nextItems = await galleryApi.listPublic();
         setItems(nextItems);
       } catch (nextError) {
         if (controller.signal.aborted) {
@@ -47,7 +38,7 @@ export default function GalleryPreview() {
 
     void loadGallery();
     return () => controller.abort();
-  }, []);
+  }, [refreshToken]);
 
   return (
     <section id="gallery" style={{ display: "grid", gap: 16 }}>
