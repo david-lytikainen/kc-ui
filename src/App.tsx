@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 
 import CommissionRequestForm from "./components/CommissionRequestForm";
 import GalleryPreview from "./components/GalleryPreview";

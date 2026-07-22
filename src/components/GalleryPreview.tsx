@@ -1,6 +1,3 @@
-import React from "react";
-
-
 export default function GalleryPreview() {
   const cards = ["Recent portrait", "Pet commission", "Original study"];
 

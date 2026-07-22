@@ -1,6 +1,3 @@
-import React from "react";
-
-
 export default function CommissionRequestForm() {
   return (
     <section id="commission" style={{ display: "grid", gap: 16 }}>

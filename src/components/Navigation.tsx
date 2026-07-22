@@ -1,6 +1,3 @@
-import React from "react";
-
-
 type NavigationProps = {
   onGalleryClick: () => void;
   onCommissionClick: () => void;
