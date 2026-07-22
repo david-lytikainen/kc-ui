@@ -1,21 +1,76 @@
+import { useEffect, useState } from "react";
+
+
+type GalleryItem = {
+  id: number;
+  title: string;
+  description: string;
+  image_url: string;
+};
+
+
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL ?? "http://localhost:8000";
+
+
 export default function GalleryPreview() {
-  const cards = ["Recent portrait", "Pet commission", "Original study"];
+  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadGallery() {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const response = await fetch(`${apiBaseUrl}/gallery`, { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error("Unable to load gallery.");
+        }
+
+        const nextItems = (await response.json()) as GalleryItem[];
+        setItems(nextItems);
+      } catch (nextError) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setError(nextError instanceof Error ? nextError.message : "Unable to load gallery.");
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadGallery();
+    return () => controller.abort();
+  }, []);
 
   return (
     <section id="gallery" style={{ display: "grid", gap: 16 }}>
       <div>
         <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", color: "#9c6f63" }}>Gallery</p>
-        <h2 style={{ margin: "8px 0 0", fontSize: "1.5rem" }}>Art preview</h2>
+        <h2 style={{ margin: "8px 0 0", fontSize: "1.5rem" }}>Published work</h2>
       </div>
-      <div style={{ display: "grid", gap: 12 }}>
-        {cards.map((card) => (
-          <article key={card} style={{ minHeight: 148, padding: 16, border: "1px solid #ead9d2", borderRadius: 14, background: "#ffffff" }}>
-            <div style={{ height: 84, borderRadius: 10, background: "#f6e7e2" }} />
-            <p style={{ margin: "12px 0 0", fontWeight: 600 }}>{card}</p>
-            <p style={{ margin: "6px 0 0", color: "#6a4b43" }}>S3-backed gallery items will render here once the gallery source is decided.</p>
-          </article>
-        ))}
-      </div>
+      {isLoading ? <p style={{ margin: 0, color: "#6a4b43" }}>Loading gallery...</p> : null}
+      {error ? <p style={{ margin: 0, color: "#8f2d1d" }}>{error}</p> : null}
+      {!isLoading && !error && items.length === 0 ? <p style={{ margin: 0, color: "#6a4b43" }}>No gallery items are published yet.</p> : null}
+      {!isLoading && !error && items.length > 0 ? (
+        <div style={{ display: "grid", gap: 12 }}>
+          {items.map((item) => (
+            <article key={item.id} style={{ overflow: "hidden", border: "1px solid #ead9d2", borderRadius: 14, background: "#ffffff" }}>
+              <img src={item.image_url} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "#f6e7e2" }} />
+              <div style={{ display: "grid", gap: 6, padding: 16 }}>
+                <p style={{ margin: 0, fontWeight: 600 }}>{item.title}</p>
+                <p style={{ margin: 0, color: "#6a4b43", lineHeight: 1.5 }}>{item.description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
