@@ -65,7 +65,6 @@ export const authApi = {
   signup: (name: string, email: string, password: string) => request<AuthResponse>("/auth/signup", { method: "POST", body: JSON.stringify({ name, email, password }) }),
   login: (email: string, password: string) => request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   validateToken: (token: string) => request<User>("/auth/validate-token", { method: "GET" }, token),
-  getProfile: (token: string) => request<User>("/profile", { method: "GET" }, token),
   updateProfile: (token: string, name: string) => request<User>("/profile", { method: "PATCH", body: JSON.stringify({ name }) }, token),
 };
 

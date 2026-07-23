@@ -14,7 +14,7 @@ export default function GalleryPreview({ refreshToken }: GalleryPreviewProps) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const controller = new AbortController();
+    let isActive = true;
 
     async function loadGallery() {
       try {
@@ -22,22 +22,24 @@ export default function GalleryPreview({ refreshToken }: GalleryPreviewProps) {
         setError("");
 
         const nextItems = await galleryApi.listPublic();
-        setItems(nextItems);
-      } catch (nextError) {
-        if (controller.signal.aborted) {
-          return;
+        if (isActive) {
+          setItems(nextItems);
         }
-
-        setError(nextError instanceof Error ? nextError.message : "Unable to load gallery.");
+      } catch (nextError) {
+        if (isActive) {
+          setError(nextError instanceof Error ? nextError.message : "Unable to load gallery.");
+        }
       } finally {
-        if (!controller.signal.aborted) {
+        if (isActive) {
           setIsLoading(false);
         }
       }
     }
 
     void loadGallery();
-    return () => controller.abort();
+    return () => {
+      isActive = false;
+    };
   }, [refreshToken]);
 
   return (

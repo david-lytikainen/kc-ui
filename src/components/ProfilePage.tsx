@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 import { authApi, GalleryDraft, galleryApi, GalleryItem, User } from "../api";
 
@@ -53,7 +53,7 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
     void loadAdminItems();
   }, [token, user.role]);
 
-  const isEditing = useMemo(() => editingId !== null, [editingId]);
+  const isEditing = editingId !== null;
 
   const handleProfileSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
