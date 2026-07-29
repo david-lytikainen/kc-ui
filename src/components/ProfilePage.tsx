@@ -124,12 +124,6 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
     setCategories(await categoryApi.listAdmin(token));
   };
 
-  const reloadOrders = async () => {
-    const response = await orderApi.listAdmin(token, ordersPage);
-    setOrders(response.items);
-    setOrdersTotal(response.total);
-  };
-
   const handleUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {

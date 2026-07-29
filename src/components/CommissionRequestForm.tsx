@@ -25,7 +25,6 @@ export default function CommissionRequestForm({ onOrderCreated }: CommissionRequ
   const [categories, setCategories] = useState<Category[]>([]);
   const [draft, setDraft] = useState<CommissionDraft>(emptyDraft);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -51,9 +50,7 @@ export default function CommissionRequestForm({ onOrderCreated }: CommissionRequ
     try {
       setIsSubmitting(true);
       setError("");
-      setMessage("");
       const order = await orderApi.submit(draft);
-      setMessage(`Order ${order.order_number} created.`);
       setDraft(emptyDraft);
       onOrderCreated(order.order_number);
     } catch (nextError) {
@@ -88,7 +85,6 @@ export default function CommissionRequestForm({ onOrderCreated }: CommissionRequ
         </label>
         {draft.files.length ? <p style={{ margin: 0, color: "#6a4b43" }}>{draft.files.length} file(s) ready to upload.</p> : null}
         {error ? <p style={{ margin: 0, color: "#8f2d1d" }}>{error}</p> : null}
-        {message ? <p style={{ margin: 0, color: "#2c6e49" }}>{message}</p> : null}
         <button type="submit" disabled={isSubmitting} style={{ border: "none", borderRadius: 10, padding: "14px 16px", background: "#2f1712", color: "#ffffff", fontSize: "1rem", fontWeight: 700, cursor: "pointer", opacity: isSubmitting ? 0.7 : 1 }}>{isSubmitting ? "Submitting..." : "Create order"}</button>
       </form>
     </section>
