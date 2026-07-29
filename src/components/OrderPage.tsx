@@ -225,6 +225,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
             <input value={quoteAmount} onChange={(event) => setQuoteAmount(event.target.value)} placeholder="Quote amount" style={{ flex: "1 1 180px", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
             <button type="button" onClick={() => void handleQuote()} style={{ border: "none", borderRadius: 10, padding: "14px 16px", background: "#2f1712", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}>Save quote</button>
             <button type="button" onClick={() => void handleDecline()} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "14px 16px", background: "#ffffff", color: "#8f2d1d", fontWeight: 700, cursor: "pointer" }}>Decline order</button>
+            {order.status !== "accepted" ? <button type="button" onClick={() => void handleStatusUpdate("accepted")} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "14px 16px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer" }}>Mark accepted</button> : null}
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button type="button" onClick={() => void handleStatusUpdate("in_progress")} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "12px 14px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer" }}>Mark in progress</button>

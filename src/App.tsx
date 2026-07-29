@@ -13,6 +13,14 @@ type AppView = "home" | "login" | "profile" | "order";
 
 
 function parseRoute(): { view: AppView; orderNumber: string } {
+  if (window.location.pathname === "/admin" || window.location.pathname === "/admin/sign-in") {
+    return { view: "login", orderNumber: "" };
+  }
+
+  if (window.location.pathname === "/admin/profile") {
+    return { view: "profile", orderNumber: "" };
+  }
+
   const match = window.location.pathname.match(/^\/order\/(\d{6})\/?$/);
   if (match) {
     return { view: "order", orderNumber: match[1] };
@@ -66,6 +74,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!user || view !== "login") {
+      return;
+    }
+
+    window.history.replaceState({}, "", "/admin/profile");
+    setView("profile");
+  }, [user, view]);
+
+  useEffect(() => {
     if (view !== "home" || !pendingScroll) {
       return;
     }
@@ -88,6 +105,12 @@ export default function App() {
     setOrderNumber("");
   };
 
+  const showProfile = () => {
+    window.history.pushState({}, "", "/admin/profile");
+    setView("profile");
+    setOrderNumber("");
+  };
+
   const openOrder = (nextOrderNumber: string, replace = false) => {
     window.history[replace ? "replaceState" : "pushState"]({}, "", `/order/${nextOrderNumber}`);
     setOrderNumber(nextOrderNumber);
@@ -99,7 +122,7 @@ export default function App() {
     setUser(nextUser);
     setAuthError("");
     setView("profile");
-    window.history.pushState({}, "", "/");
+    window.history.pushState({}, "", "/admin/profile");
   };
 
   const handleLogout = () => {
@@ -116,8 +139,7 @@ export default function App() {
         onGalleryClick={() => showHomeSection("gallery")}
         onCommissionClick={() => showHomeSection("commission")}
         onHomeClick={showHome}
-        onProfileClick={() => setView("profile")}
-        onLoginClick={() => setView("login")}
+        onProfileClick={showProfile}
         onLogoutClick={handleLogout}
       />
       <main style={{ display: "grid", gap: 28, padding: 20, maxWidth: 560, margin: "0 auto" }}>
@@ -137,7 +159,7 @@ export default function App() {
             </div>
           </>
         ) : null}
-        {view === "login" ? <AuthPanel onAuthed={handleAuthed} /> : null}
+        {view === "login" || (view === "profile" && (!user || !token)) ? <AuthPanel onAuthed={handleAuthed} /> : null}
         {view === "profile" && user && token ? <ProfilePage token={token} user={user} onUserChange={setUser} onGalleryChanged={() => setGalleryRefreshToken((current) => current + 1)} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} /> : null}
         {view === "order" && orderNumber ? <OrderPage orderNumber={orderNumber} token={token} user={user} onBackHome={showHome} /> : null}
       </main>
