@@ -92,17 +92,11 @@ export default function App() {
     setPendingScroll(null);
   }, [pendingScroll, view]);
 
-  const showHomeSection = (section: "gallery" | "commission") => {
+  const showHome = (section: "gallery" | "commission" | null = null) => {
     window.history.pushState({}, "", "/");
     setView("home");
     setOrderNumber("");
     setPendingScroll(section);
-  };
-
-  const showHome = () => {
-    window.history.pushState({}, "", "/");
-    setView("home");
-    setOrderNumber("");
   };
 
   const showProfile = () => {
@@ -111,8 +105,8 @@ export default function App() {
     setOrderNumber("");
   };
 
-  const openOrder = (nextOrderNumber: string, replace = false) => {
-    window.history[replace ? "replaceState" : "pushState"]({}, "", `/order/${nextOrderNumber}`);
+  const openOrder = (nextOrderNumber: string) => {
+    window.history.pushState({}, "", `/order/${nextOrderNumber}`);
     setOrderNumber(nextOrderNumber);
     setView("order");
   };
@@ -121,8 +115,7 @@ export default function App() {
     setToken(nextToken);
     setUser(nextUser);
     setAuthError("");
-    setView("profile");
-    window.history.pushState({}, "", "/admin/profile");
+    showProfile();
   };
 
   const handleLogout = () => {
@@ -136,8 +129,8 @@ export default function App() {
     <div style={{ minHeight: "100vh", background: "#fff7f5", color: "#2f1712" }}>
       <Navigation
         isAuthenticated={Boolean(user)}
-        onGalleryClick={() => showHomeSection("gallery")}
-        onCommissionClick={() => showHomeSection("commission")}
+        onGalleryClick={() => showHome("gallery")}
+        onCommissionClick={() => showHome("commission")}
         onHomeClick={showHome}
         onProfileClick={showProfile}
         onLogoutClick={handleLogout}
