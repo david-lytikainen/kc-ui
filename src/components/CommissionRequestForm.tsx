@@ -9,11 +9,11 @@ type CommissionRequestFormProps = {
 
 
 const emptyDraft: CommissionDraft = {
-  customer_name: "",
-  customer_email: "",
-  customer_phone: "",
-  category_id: "",
-  custom_category_name: "",
+  customerName: "",
+  customerEmail: "",
+  customerPhone: "",
+  categoryId: "",
+  customCategoryName: "",
   instructions: "",
   medium: "",
   size: "",
@@ -39,7 +39,7 @@ export default function CommissionRequestForm({ onOrderCreated }: CommissionRequ
     void loadCategories();
   }, []);
 
-  const isCustomCategory = draft.category_id === "custom";
+  const isCustomCategory = draft.categoryId === "custom";
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     setDraft((current) => ({ ...current, files: Array.from(event.target.files ?? []).slice(0, 5) }));
@@ -52,7 +52,7 @@ export default function CommissionRequestForm({ onOrderCreated }: CommissionRequ
       setError("");
       const order = await orderApi.submit(draft);
       setDraft(emptyDraft);
-      onOrderCreated(order.order_number);
+      onOrderCreated(order.orderNumber);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to submit commission request.");
     } finally {
@@ -67,15 +67,15 @@ export default function CommissionRequestForm({ onOrderCreated }: CommissionRequ
         <h2 style={{ margin: "8px 0 0", fontSize: "1.5rem" }}>Request a piece</h2>
       </div>
       <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12, padding: 16, border: "1px solid #ead9d2", borderRadius: 14, background: "#ffffff" }}>
-        <input value={draft.customer_name} onChange={(event) => setDraft((current) => ({ ...current, customer_name: event.target.value }))} placeholder="Your name" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
-        <input value={draft.customer_email} onChange={(event) => setDraft((current) => ({ ...current, customer_email: event.target.value }))} placeholder="Email" type="email" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
-        <input value={draft.customer_phone} onChange={(event) => setDraft((current) => ({ ...current, customer_phone: event.target.value }))} placeholder="Phone" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
-        <select value={draft.category_id} onChange={(event) => setDraft((current) => ({ ...current, category_id: event.target.value }))} style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem", background: "#ffffff" }}>
+        <input value={draft.customerName} onChange={(event) => setDraft((current) => ({ ...current, customerName: event.target.value }))} placeholder="Your name" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
+        <input value={draft.customerEmail} onChange={(event) => setDraft((current) => ({ ...current, customerEmail: event.target.value }))} placeholder="Email" type="email" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
+        <input value={draft.customerPhone} onChange={(event) => setDraft((current) => ({ ...current, customerPhone: event.target.value }))} placeholder="Phone" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
+        <select value={draft.categoryId} onChange={(event) => setDraft((current) => ({ ...current, categoryId: event.target.value }))} style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem", background: "#ffffff" }}>
           <option value="">Choose a category</option>
           {categories.map((category) => <option key={category.id} value={String(category.id)}>{category.name}</option>)}
           <option value="custom">Custom</option>
         </select>
-        {isCustomCategory ? <input value={draft.custom_category_name} onChange={(event) => setDraft((current) => ({ ...current, custom_category_name: event.target.value }))} placeholder="Custom category" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} /> : null}
+        {isCustomCategory ? <input value={draft.customCategoryName} onChange={(event) => setDraft((current) => ({ ...current, customCategoryName: event.target.value }))} placeholder="Custom category" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} /> : null}
         <textarea value={draft.instructions} onChange={(event) => setDraft((current) => ({ ...current, instructions: event.target.value }))} placeholder="Instructions" rows={5} style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem", resize: "vertical" }} />
         <input value={draft.medium} onChange={(event) => setDraft((current) => ({ ...current, medium: event.target.value }))} placeholder="Medium" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
         <input value={draft.size} onChange={(event) => setDraft((current) => ({ ...current, size: event.target.value }))} placeholder="Size" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />

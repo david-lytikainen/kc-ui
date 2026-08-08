@@ -3,8 +3,8 @@ export type User = {
   name: string;
   email: string;
   role: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 
@@ -18,99 +18,99 @@ export type GalleryItem = {
   id: number;
   title: string;
   description: string;
-  image_url: string;
-  source_image_url: string;
-  s3_key: string | null;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
+  imageUrl: string;
+  sourceImageUrl: string;
+  s3Key: string | null;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 
 export type GalleryDraft = {
   title: string;
   description: string;
-  image_url: string;
-  s3_key: string;
+  imageUrl: string;
+  s3Key: string;
 };
 
 
 export type Category = {
   id: number;
   name: string;
-  is_archived: boolean;
-  created_at: string;
-  updated_at: string;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 
 export type OrderFile = {
   id: number;
-  file_name: string;
-  file_url: string;
-  content_type: string;
-  size_bytes: number;
-  created_at: string;
+  fileName: string;
+  fileUrl: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt: string;
 };
 
 
 export type OrderComment = {
   id: number;
-  author_role: string;
+  authorRole: string;
   body: string;
-  email_sent_at: string | null;
-  created_at: string;
-  updated_at: string;
-  can_send_email: boolean;
+  emailSentAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  canSendEmail: boolean;
 };
 
 
 export type Order = {
-  order_number: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  category_name: string;
-  category_id: number | null;
-  custom_category_name: string | null;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  categoryName: string;
+  categoryId: number | null;
+  customCategoryName: string | null;
   instructions: string;
   medium: string;
   size: string;
   status: string;
-  quote_amount_cents: number | null;
-  created_at: string;
-  updated_at: string;
-  viewer_is_admin: boolean;
+  quoteAmountCents: number | null;
+  createdAt: string;
+  updatedAt: string;
+  viewerIsAdmin: boolean;
   files: OrderFile[];
   comments: OrderComment[];
 };
 
 
 export type OrderSummary = {
-  order_number: string;
-  customer_name: string;
-  category_name: string;
+  orderNumber: string;
+  customerName: string;
+  categoryName: string;
   status: string;
-  quote_amount_cents: number | null;
-  created_at: string;
-  updated_at: string;
+  quoteAmountCents: number | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 
 export type PaginatedOrders = {
   items: OrderSummary[];
   page: number;
-  page_size: number;
+  pageSize: number;
   total: number;
 };
 
 
 export type CommissionDraft = {
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  category_id: string;
-  custom_category_name: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  categoryId: string;
+  customCategoryName: string;
   instructions: string;
   medium: string;
   size: string;
@@ -157,11 +157,11 @@ export const galleryApi = {
   create: (token: string, payload: GalleryDraft) => request<GalleryItem>("/admin/gallery", { method: "POST", body: JSON.stringify(payload) }, token),
   update: (token: string, itemId: number, payload: GalleryDraft) => request<GalleryItem>(`/admin/gallery/${itemId}`, { method: "PATCH", body: JSON.stringify(payload) }, token),
   remove: (token: string, itemId: number) => request<{ status: string }>(`/admin/gallery/${itemId}`, { method: "DELETE" }, token),
-  reorder: (token: string, orderedIds: number[]) => request<{ status: string }>("/admin/gallery/reorder", { method: "POST", body: JSON.stringify({ ordered_ids: orderedIds }) }, token),
+  reorder: (token: string, orderedIds: number[]) => request<{ status: string }>("/admin/gallery/reorder", { method: "POST", body: JSON.stringify({ orderedIds }) }, token),
   upload: async (token: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    return request<{ s3_key: string; preview_url: string }>("/admin/gallery/upload", { method: "POST", body: formData }, token);
+    return request<{ s3Key: string; previewUrl: string }>("/admin/gallery/upload", { method: "POST", body: formData }, token);
   },
 };
 
@@ -170,20 +170,20 @@ export const categoryApi = {
   listPublic: () => request<Category[]>("/commission-categories"),
   listAdmin: (token: string) => request<Category[]>("/admin/commission-categories", { method: "GET" }, token),
   create: (token: string, name: string) => request<Category>("/admin/commission-categories", { method: "POST", body: JSON.stringify({ name }) }, token),
-  update: (token: string, categoryId: number, name: string, isArchived: boolean) => request<Category>(`/admin/commission-categories/${categoryId}`, { method: "PATCH", body: JSON.stringify({ name, is_archived: isArchived }) }, token),
+  update: (token: string, categoryId: number, name: string, isArchived: boolean) => request<Category>(`/admin/commission-categories/${categoryId}`, { method: "PATCH", body: JSON.stringify({ name, isArchived }) }, token),
 };
 
 
 export const orderApi = {
   submit: async (draft: CommissionDraft) => {
     const formData = new FormData();
-    formData.append("customer_name", draft.customer_name);
-    formData.append("customer_email", draft.customer_email);
-    formData.append("customer_phone", draft.customer_phone);
-    if (draft.category_id && draft.category_id !== "custom") {
-      formData.append("category_id", draft.category_id);
+    formData.append("customer_name", draft.customerName);
+    formData.append("customer_email", draft.customerEmail);
+    formData.append("customer_phone", draft.customerPhone);
+    if (draft.categoryId && draft.categoryId !== "custom") {
+      formData.append("category_id", draft.categoryId);
     }
-    formData.append("custom_category_name", draft.custom_category_name);
+    formData.append("custom_category_name", draft.customCategoryName);
     formData.append("instructions", draft.instructions);
     formData.append("medium", draft.medium);
     formData.append("size", draft.size);
@@ -197,9 +197,9 @@ export const orderApi = {
   sendCommentEmail: (orderNumber: string, commentId: number, token?: string) => request<OrderComment>(`/orders/${orderNumber}/comments/${commentId}/send-email`, { method: "POST" }, token),
   decline: (orderNumber: string) => request<Order>(`/orders/${orderNumber}/decline`, { method: "POST" }),
   createCheckout: (orderNumber: string) => request<{ url: string }>(`/orders/${orderNumber}/checkout`, { method: "POST" }),
-  confirmCheckout: (orderNumber: string, checkoutSessionId: string) => request<Order>(`/orders/${orderNumber}/confirm-payment`, { method: "POST", body: JSON.stringify({ checkout_session_id: checkoutSessionId }) }),
+  confirmCheckout: (orderNumber: string, checkoutSessionId: string) => request<Order>(`/orders/${orderNumber}/confirm-payment`, { method: "POST", body: JSON.stringify({ checkoutSessionId }) }),
   listAdmin: (token: string, page: number) => request<PaginatedOrders>(`/admin/orders?page=${page}&page_size=10`, { method: "GET" }, token),
-  setQuote: (token: string, orderNumber: string, quoteAmount: string) => request<Order>(`/admin/orders/${orderNumber}/quote`, { method: "POST", body: JSON.stringify({ quote_amount: quoteAmount }) }, token),
+  setQuote: (token: string, orderNumber: string, quoteAmount: string) => request<Order>(`/admin/orders/${orderNumber}/quote`, { method: "POST", body: JSON.stringify({ quoteAmount }) }, token),
   declineAdmin: (token: string, orderNumber: string) => request<Order>(`/admin/orders/${orderNumber}/decline`, { method: "POST" }, token),
   updateStatus: (token: string, orderNumber: string, status: string) => request<Order>(`/admin/orders/${orderNumber}/status`, { method: "POST", body: JSON.stringify({ status }) }, token),
 };

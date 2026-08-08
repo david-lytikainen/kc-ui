@@ -12,7 +12,7 @@ type ProfilePageProps = {
 };
 
 
-const emptyDraft: GalleryDraft = { title: "", description: "", image_url: "", s3_key: "" };
+const emptyDraft: GalleryDraft = { title: "", description: "", imageUrl: "", s3Key: "" };
 
 
 export default function ProfilePage({ token, user, onUserChange, onGalleryChanged, onOpenOrder }: ProfilePageProps) {
@@ -134,8 +134,8 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
       setIsUploading(true);
       setGalleryError("");
       const uploaded = await galleryApi.upload(token, file);
-      setDraft((current) => ({ ...current, s3_key: uploaded.s3_key }));
-      setUploadedPreviewUrl(uploaded.preview_url);
+      setDraft((current) => ({ ...current, s3Key: uploaded.s3Key }));
+      setUploadedPreviewUrl(uploaded.previewUrl);
       setGalleryMessage("Image uploaded.");
     } catch (nextError) {
       setGalleryError(nextError instanceof Error ? nextError.message : "Upload failed.");
@@ -224,7 +224,7 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
         if (!category) {
           throw new Error("Category not found.");
         }
-        await categoryApi.update(token, editingCategoryId, categoryName, category.is_archived);
+        await categoryApi.update(token, editingCategoryId, categoryName, category.isArchived);
       } else {
         await categoryApi.create(token, categoryName);
       }
@@ -241,9 +241,9 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
     try {
       setCategoryError("");
       setCategoryMessage("");
-      await categoryApi.update(token, category.id, category.name, !category.is_archived);
+      await categoryApi.update(token, category.id, category.name, !category.isArchived);
       await reloadCategories();
-      setCategoryMessage(category.is_archived ? "Category restored." : "Category archived.");
+      setCategoryMessage(category.isArchived ? "Category restored." : "Category archived.");
     } catch (nextError) {
       setCategoryError(nextError instanceof Error ? nextError.message : "Unable to update category.");
     }
@@ -278,8 +278,8 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
               <form onSubmit={handleGallerySubmit} style={{ display: "grid", gap: 12 }}>
                 <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
                 <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem", resize: "vertical" }} />
-                <input value={draft.image_url} onChange={(event) => setDraft((current) => ({ ...current, image_url: event.target.value }))} placeholder="Signed or fallback image URL" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
-                <input value={draft.s3_key} onChange={(event) => setDraft((current) => ({ ...current, s3_key: event.target.value }))} placeholder="S3 key" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
+                <input value={draft.imageUrl} onChange={(event) => setDraft((current) => ({ ...current, imageUrl: event.target.value }))} placeholder="Signed or fallback image URL" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
+                <input value={draft.s3Key} onChange={(event) => setDraft((current) => ({ ...current, s3Key: event.target.value }))} placeholder="S3 key" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
                 <label style={{ display: "grid", gap: 8, color: "#6a4b43" }}>
                   <span>Upload image to S3</span>
                   <input type="file" accept="image/*" onChange={handleUpload} />
@@ -298,14 +298,14 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                 <div style={{ display: "grid", gap: 12 }}>
                   {items.map((item) => (
                     <article key={item.id} draggable onDragStart={() => setDraggingId(item.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(item.id)} style={{ display: "grid", gap: 10, padding: 14, border: "1px solid #ead9d2", borderRadius: 12, background: "#fffaf8" }}>
-                      <img src={item.image_url} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 10, background: "#f6e7e2" }} />
+                      <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 10, background: "#f6e7e2" }} />
                       <div style={{ display: "grid", gap: 6 }}>
                         <p style={{ margin: 0, fontWeight: 700 }}>{item.title}</p>
                         <p style={{ margin: 0, color: "#6a4b43", lineHeight: 1.5 }}>{item.description}</p>
                         <p style={{ margin: 0, color: "#9c6f63", fontSize: "0.85rem" }}>Drag to reorder</p>
                       </div>
                       <div style={{ display: "flex", gap: 12 }}>
-                        <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, image_url: item.source_image_url, s3_key: item.s3_key ?? "" }); setUploadedPreviewUrl(item.image_url); }} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "12px 14px", background: "#ffffff", color: "#2f1712", fontSize: "0.95rem", fontWeight: 700, cursor: "pointer" }}>Edit</button>
+                        <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "" }); setUploadedPreviewUrl(item.imageUrl); }} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "12px 14px", background: "#ffffff", color: "#2f1712", fontSize: "0.95rem", fontWeight: 700, cursor: "pointer" }}>Edit</button>
                         <button type="button" onClick={() => void handleDelete(item.id)} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "12px 14px", background: "#ffffff", color: "#8f2d1d", fontSize: "0.95rem", fontWeight: 700, cursor: "pointer" }}>Delete</button>
                       </div>
                     </article>
@@ -330,12 +330,12 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                 </form>
                 <div style={{ display: "grid", gap: 12 }}>
                   {categories.map((category) => (
-                    <div key={category.id} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #ead9d2", borderRadius: 12, background: category.is_archived ? "#faf3f0" : "#fffaf8" }}>
+                    <div key={category.id} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #ead9d2", borderRadius: 12, background: category.isArchived ? "#faf3f0" : "#fffaf8" }}>
                       <p style={{ margin: 0, fontWeight: 700 }}>{category.name}</p>
-                      <p style={{ margin: 0, color: "#6a4b43" }}>{category.is_archived ? "Archived" : "Active"}</p>
+                      <p style={{ margin: 0, color: "#6a4b43" }}>{category.isArchived ? "Archived" : "Active"}</p>
                       <div style={{ display: "flex", gap: 12 }}>
                         <button type="button" onClick={() => { setEditingCategoryId(category.id); setCategoryName(category.name); }} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "10px 12px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer" }}>Edit</button>
-                        <button type="button" onClick={() => void toggleArchiveCategory(category)} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "10px 12px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer" }}>{category.is_archived ? "Restore" : "Archive"}</button>
+                        <button type="button" onClick={() => void toggleArchiveCategory(category)} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "10px 12px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer" }}>{category.isArchived ? "Restore" : "Archive"}</button>
                       </div>
                     </div>
                   ))}
@@ -352,11 +352,11 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
               {!isLoadingOrders ? (
                 <div style={{ display: "grid", gap: 12 }}>
                   {orders.map((order) => (
-                    <article key={order.order_number} style={{ display: "grid", gap: 8, padding: 14, border: "1px solid #ead9d2", borderRadius: 12, background: "#fffaf8" }}>
-                      <p style={{ margin: 0, fontWeight: 700 }}>Order {order.order_number}</p>
-                      <p style={{ margin: 0, color: "#6a4b43" }}>{order.customer_name} · {order.category_name}</p>
+                    <article key={order.orderNumber} style={{ display: "grid", gap: 8, padding: 14, border: "1px solid #ead9d2", borderRadius: 12, background: "#fffaf8" }}>
+                      <p style={{ margin: 0, fontWeight: 700 }}>Order {order.orderNumber}</p>
+                      <p style={{ margin: 0, color: "#6a4b43" }}>{order.customerName} · {order.categoryName}</p>
                       <p style={{ margin: 0, color: "#6a4b43" }}>Status: {order.status}</p>
-                      <button type="button" onClick={() => onOpenOrder(order.order_number)} style={{ justifySelf: "start", border: "none", borderRadius: 10, padding: "12px 14px", background: "#2f1712", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}>Open order</button>
+                      <button type="button" onClick={() => onOpenOrder(order.orderNumber)} style={{ justifySelf: "start", border: "none", borderRadius: 10, padding: "12px 14px", background: "#2f1712", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}>Open order</button>
                     </article>
                   ))}
                 </div>

@@ -55,7 +55,7 @@ export default function GalleryPreview({ refreshToken }: GalleryPreviewProps) {
         <div style={{ display: "grid", gap: 12 }}>
           {items.map((item) => (
             <article key={item.id} style={{ overflow: "hidden", border: "1px solid #ead9d2", borderRadius: 14, background: "#ffffff" }}>
-              <img src={item.image_url} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "#f6e7e2" }} />
+              <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "#f6e7e2" }} />
               <div style={{ display: "grid", gap: 6, padding: 16 }}>
                 <p style={{ margin: 0, fontWeight: 600 }}>{item.title}</p>
                 <p style={{ margin: 0, color: "#6a4b43", lineHeight: 1.5 }}>{item.description}</p>

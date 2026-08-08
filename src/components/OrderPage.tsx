@@ -30,7 +30,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
   const [editingBody, setEditingBody] = useState("");
   const [quoteAmount, setQuoteAmount] = useState("");
 
-  const viewerIsAdmin = Boolean(user && token && order?.viewer_is_admin);
+  const viewerIsAdmin = Boolean(user && token && order?.viewerIsAdmin);
 
   const reloadOrder = async () => {
     setOrder(await orderApi.get(orderNumber, token || undefined));
@@ -44,8 +44,8 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
         setMessage("");
         const nextOrder = await orderApi.get(orderNumber, token || undefined);
         setOrder(nextOrder);
-        if (nextOrder.quote_amount_cents !== null) {
-          setQuoteAmount((nextOrder.quote_amount_cents / 100).toFixed(2));
+        if (nextOrder.quoteAmountCents !== null) {
+          setQuoteAmount((nextOrder.quoteAmountCents / 100).toFixed(2));
         }
       } catch (nextError) {
         setError(nextError instanceof Error ? nextError.message : "Unable to load order.");
@@ -79,7 +79,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
 
   const ownRole = viewerIsAdmin ? "admin" : "customer";
 
-  const editableCommentIds = useMemo(() => new Set((order?.comments ?? []).filter((comment) => comment.author_role === ownRole).map((comment) => comment.id)), [order?.comments, ownRole]);
+  const editableCommentIds = useMemo(() => new Set((order?.comments ?? []).filter((comment) => comment.authorRole === ownRole).map((comment) => comment.id)), [order?.comments, ownRole]);
 
   const handleCommentSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -191,22 +191,22 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
     <section style={{ display: "grid", gap: 16 }}>
       <button type="button" onClick={onBackHome} style={{ justifySelf: "start", border: "none", background: "transparent", padding: 0, color: "#6a4b43", fontWeight: 700, cursor: "pointer" }}>Back home</button>
       <div>
-        <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", color: "#9c6f63" }}>Order {order.order_number}</p>
-        <h2 style={{ margin: "8px 0 0", fontSize: "1.5rem" }}>{order.customer_name}</h2>
+        <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", color: "#9c6f63" }}>Order {order.orderNumber}</p>
+        <h2 style={{ margin: "8px 0 0", fontSize: "1.5rem" }}>{order.customerName}</h2>
       </div>
       <div style={{ display: "grid", gap: 8, padding: 16, border: "1px solid #ead9d2", borderRadius: 14, background: "#ffffff" }}>
         <p style={{ margin: 0 }}>Status: <strong>{order.status}</strong></p>
-        <p style={{ margin: 0 }}>Category: {order.category_name}</p>
+        <p style={{ margin: 0 }}>Category: {order.categoryName}</p>
         <p style={{ margin: 0 }}>Medium: {order.medium}</p>
         <p style={{ margin: 0 }}>Size: {order.size}</p>
-        <p style={{ margin: 0 }}>Phone: {order.customer_phone}</p>
-        <p style={{ margin: 0 }}>Email: {order.customer_email}</p>
+        <p style={{ margin: 0 }}>Phone: {order.customerPhone}</p>
+        <p style={{ margin: 0 }}>Email: {order.customerEmail}</p>
         <p style={{ margin: 0, color: "#6a4b43", lineHeight: 1.5 }}>{order.instructions}</p>
-        <p style={{ margin: 0 }}>Quote: {formatCurrency(order.quote_amount_cents)}</p>
+        <p style={{ margin: 0 }}>Quote: {formatCurrency(order.quoteAmountCents)}</p>
         {order.files.length ? (
           <div style={{ display: "grid", gap: 8 }}>
             <p style={{ margin: 0, fontWeight: 700 }}>Reference images</p>
-            {order.files.map((file) => <a key={file.id} href={file.file_url} target="_blank" rel="noreferrer" style={{ color: "#2f1712" }}>{file.file_name}</a>)}
+            {order.files.map((file) => <a key={file.id} href={file.fileUrl} target="_blank" rel="noreferrer" style={{ color: "#2f1712" }}>{file.fileName}</a>)}
           </div>
         ) : null}
       </div>
@@ -238,9 +238,9 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
       <section style={{ display: "grid", gap: 12, padding: 16, border: "1px solid #ead9d2", borderRadius: 14, background: "#ffffff" }}>
         <p style={{ margin: 0, fontWeight: 700 }}>Comments</p>
         {order.comments.map((comment) => (
-          <article key={comment.id} id={`comment-${comment.id}`} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #ead9d2", borderRadius: 12, background: comment.author_role === "admin" ? "#fff7f0" : "#fffaf8" }}>
-            <p style={{ margin: 0, fontWeight: 700 }}>{comment.author_role === "admin" ? "Admin" : "Customer"} comment</p>
-            <p style={{ margin: 0, color: "#6a4b43", fontSize: "0.85rem" }}>{new Date(comment.updated_at).toLocaleString()}</p>
+          <article key={comment.id} id={`comment-${comment.id}`} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #ead9d2", borderRadius: 12, background: comment.authorRole === "admin" ? "#fff7f0" : "#fffaf8" }}>
+            <p style={{ margin: 0, fontWeight: 700 }}>{comment.authorRole === "admin" ? "Admin" : "Customer"} comment</p>
+            <p style={{ margin: 0, color: "#6a4b43", fontSize: "0.85rem" }}>{new Date(comment.updatedAt).toLocaleString()}</p>
             {editingCommentId === comment.id ? (
               <div style={{ display: "grid", gap: 8 }}>
                 <textarea value={editingBody} onChange={(event) => setEditingBody(event.target.value)} rows={4} style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem", resize: "vertical" }} />
@@ -256,8 +256,8 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
                 <button type="button" onClick={() => void handleCommentDelete(comment.id)} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "10px 12px", background: "#ffffff", color: "#8f2d1d", fontWeight: 700, cursor: "pointer" }}>Delete</button>
               </div>
             ) : null}
-            {comment.can_send_email && comment.author_role === ownRole ? (
-              <button type="button" disabled={Boolean(comment.email_sent_at)} onClick={() => void handleCommentEmail(comment)} style={{ justifySelf: "start", border: "1px solid #d9c4bd", borderRadius: 10, padding: "10px 12px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer", opacity: comment.email_sent_at ? 0.6 : 1 }}>Email {viewerIsAdmin ? "customer" : "admin"}</button>
+            {comment.canSendEmail && comment.authorRole === ownRole ? (
+              <button type="button" disabled={Boolean(comment.emailSentAt)} onClick={() => void handleCommentEmail(comment)} style={{ justifySelf: "start", border: "1px solid #d9c4bd", borderRadius: 10, padding: "10px 12px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer", opacity: comment.emailSentAt ? 0.6 : 1 }}>Email {viewerIsAdmin ? "customer" : "admin"}</button>
             ) : null}
           </article>
         ))}
