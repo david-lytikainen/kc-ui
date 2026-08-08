@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { Order, OrderComment, orderApi, User } from "../api";
 
@@ -32,8 +32,17 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
 
   const viewerIsAdmin = Boolean(user && token && order?.viewerIsAdmin);
 
+  const applyOrder = (nextOrder: Order) => {
+    setOrder(nextOrder);
+    if (nextOrder.quoteAmountCents !== null) {
+      setQuoteAmount((nextOrder.quoteAmountCents / 100).toFixed(2));
+      return;
+    }
+    setQuoteAmount("");
+  };
+
   const reloadOrder = async () => {
-    setOrder(await orderApi.get(orderNumber, token || undefined));
+    applyOrder(await orderApi.get(orderNumber, token || undefined));
   };
 
   useEffect(() => {
@@ -42,11 +51,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
         setIsLoading(true);
         setError("");
         setMessage("");
-        const nextOrder = await orderApi.get(orderNumber, token || undefined);
-        setOrder(nextOrder);
-        if (nextOrder.quoteAmountCents !== null) {
-          setQuoteAmount((nextOrder.quoteAmountCents / 100).toFixed(2));
-        }
+        applyOrder(await orderApi.get(orderNumber, token || undefined));
       } catch (nextError) {
         setError(nextError instanceof Error ? nextError.message : "Unable to load order.");
       } finally {
@@ -79,7 +84,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
 
   const ownRole = viewerIsAdmin ? "admin" : "customer";
 
-  const editableCommentIds = useMemo(() => new Set((order?.comments ?? []).filter((comment) => comment.authorRole === ownRole).map((comment) => comment.id)), [order?.comments, ownRole]);
+  const editableCommentIds = new Set((order?.comments ?? []).filter((comment) => comment.authorRole === ownRole).map((comment) => comment.id));
 
   const handleCommentSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

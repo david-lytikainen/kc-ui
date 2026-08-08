@@ -7,12 +7,10 @@ export type User = {
   updatedAt: string;
 };
 
-
 export type AuthResponse = {
   token: string;
   user: User;
 };
-
 
 export type GalleryItem = {
   id: number;
@@ -26,14 +24,12 @@ export type GalleryItem = {
   updatedAt: string;
 };
 
-
 export type GalleryDraft = {
   title: string;
   description: string;
   imageUrl: string;
   s3Key: string;
 };
-
 
 export type Category = {
   id: number;
@@ -42,7 +38,6 @@ export type Category = {
   createdAt: string;
   updatedAt: string;
 };
-
 
 export type OrderFile = {
   id: number;
@@ -53,7 +48,6 @@ export type OrderFile = {
   createdAt: string;
 };
 
-
 export type OrderComment = {
   id: number;
   authorRole: string;
@@ -63,7 +57,6 @@ export type OrderComment = {
   updatedAt: string;
   canSendEmail: boolean;
 };
-
 
 export type Order = {
   orderNumber: string;
@@ -85,7 +78,6 @@ export type Order = {
   comments: OrderComment[];
 };
 
-
 export type OrderSummary = {
   orderNumber: string;
   customerName: string;
@@ -96,14 +88,12 @@ export type OrderSummary = {
   updatedAt: string;
 };
 
-
 export type PaginatedOrders = {
   items: OrderSummary[];
   page: number;
   pageSize: number;
   total: number;
 };
-
 
 export type CommissionDraft = {
   customerName: string;
@@ -117,9 +107,7 @@ export type CommissionDraft = {
   files: File[];
 };
 
-
 const apiBaseUrl = process.env.REACT_APP_API_BASE_URL ?? "http://localhost:8000";
-
 
 async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   const headers = new Headers(options.headers);
@@ -143,13 +131,11 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
   return (await response.json()) as T;
 }
 
-
 export const authApi = {
   login: (email: string, password: string) => request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   validateToken: (token: string) => request<User>("/auth/validate-token", { method: "GET" }, token),
   updateProfile: (token: string, name: string) => request<User>("/profile", { method: "PATCH", body: JSON.stringify({ name }) }, token),
 };
-
 
 export const galleryApi = {
   listPublic: () => request<GalleryItem[]>("/gallery"),
@@ -165,7 +151,6 @@ export const galleryApi = {
   },
 };
 
-
 export const categoryApi = {
   listPublic: () => request<Category[]>("/commission-categories"),
   listAdmin: (token: string) => request<Category[]>("/admin/commission-categories", { method: "GET" }, token),
@@ -173,9 +158,8 @@ export const categoryApi = {
   update: (token: string, categoryId: number, name: string, isArchived: boolean) => request<Category>(`/admin/commission-categories/${categoryId}`, { method: "PATCH", body: JSON.stringify({ name, isArchived }) }, token),
 };
 
-
 export const orderApi = {
-  submit: async (draft: CommissionDraft) => {
+  submit: (draft: CommissionDraft) => {
     const formData = new FormData();
     formData.append("customer_name", draft.customerName);
     formData.append("customer_email", draft.customerEmail);

@@ -1,6 +1,6 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
-import { authApi, Category, categoryApi, GalleryDraft, galleryApi, GalleryItem, orderApi, OrderSummary, PaginatedOrders, User } from "../api";
+import { authApi, Category, categoryApi, GalleryDraft, galleryApi, GalleryItem, orderApi, OrderSummary, User } from "../api";
 
 
 type ProfilePageProps = {
@@ -83,7 +83,7 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
       try {
         setIsLoadingOrders(true);
         setOrdersError("");
-        const response: PaginatedOrders = await orderApi.listAdmin(token, ordersPage);
+        const response = await orderApi.listAdmin(token, ordersPage);
         setOrders(response.items);
         setOrdersTotal(response.total);
       } catch (nextError) {
