@@ -144,7 +144,7 @@ export const galleryApi = {
   update: (token: string, itemId: number, payload: GalleryDraft) => request<GalleryItem>(`/admin/gallery/${itemId}`, { method: "PATCH", body: JSON.stringify(payload) }, token),
   remove: (token: string, itemId: number) => request<{ status: string }>(`/admin/gallery/${itemId}`, { method: "DELETE" }, token),
   reorder: (token: string, orderedIds: number[]) => request<{ status: string }>("/admin/gallery/reorder", { method: "POST", body: JSON.stringify({ orderedIds }) }, token),
-  upload: async (token: string, file: File) => {
+  upload: (token: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
     return request<{ s3Key: string; previewUrl: string }>("/admin/gallery/upload", { method: "POST", body: formData }, token);

@@ -30,6 +30,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
   const [editingBody, setEditingBody] = useState("");
   const [quoteAmount, setQuoteAmount] = useState("");
 
+  const authToken = token || undefined;
   const viewerIsAdmin = Boolean(user && token && order?.viewerIsAdmin);
 
   const applyOrder = (nextOrder: Order) => {
@@ -42,7 +43,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
   };
 
   const reloadOrder = async () => {
-    applyOrder(await orderApi.get(orderNumber, token || undefined));
+    applyOrder(await orderApi.get(orderNumber, authToken));
   };
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
         setIsLoading(true);
         setError("");
         setMessage("");
-        applyOrder(await orderApi.get(orderNumber, token || undefined));
+        applyOrder(await orderApi.get(orderNumber, authToken));
       } catch (nextError) {
         setError(nextError instanceof Error ? nextError.message : "Unable to load order.");
       } finally {
@@ -60,7 +61,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
     }
 
     void loadOrder();
-  }, [orderNumber, token]);
+  }, [authToken, orderNumber]);
 
   useEffect(() => {
     const checkoutSessionId = new URLSearchParams(window.location.search).get("checkout_session_id");
@@ -91,7 +92,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
     try {
       setError("");
       setMessage("");
-      await orderApi.createComment(orderNumber, commentBody, token || undefined);
+      await orderApi.createComment(orderNumber, commentBody, authToken);
       setCommentBody("");
       await reloadOrder();
       setMessage("Comment added.");
@@ -104,7 +105,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
     try {
       setError("");
       setMessage("");
-      await orderApi.updateComment(orderNumber, commentId, editingBody, token || undefined);
+      await orderApi.updateComment(orderNumber, commentId, editingBody, authToken);
       setEditingCommentId(null);
       setEditingBody("");
       await reloadOrder();
@@ -118,7 +119,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
     try {
       setError("");
       setMessage("");
-      await orderApi.deleteComment(orderNumber, commentId, token || undefined);
+      await orderApi.deleteComment(orderNumber, commentId, authToken);
       await reloadOrder();
       setMessage("Comment deleted.");
     } catch (nextError) {
@@ -130,7 +131,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
     try {
       setError("");
       setMessage("");
-      await orderApi.sendCommentEmail(orderNumber, comment.id, token || undefined);
+      await orderApi.sendCommentEmail(orderNumber, comment.id, authToken);
       await reloadOrder();
       setMessage("Email sent.");
     } catch (nextError) {
@@ -143,7 +144,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
       setError("");
       setMessage("");
       const nextOrder = viewerIsAdmin ? await orderApi.declineAdmin(token, orderNumber) : await orderApi.decline(orderNumber);
-      setOrder(nextOrder);
+      applyOrder(nextOrder);
       setMessage("Order declined.");
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to decline order.");
@@ -165,7 +166,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
       setError("");
       setMessage("");
       const nextOrder = await orderApi.setQuote(token, orderNumber, quoteAmount);
-      setOrder(nextOrder);
+      applyOrder(nextOrder);
       setMessage("Quote saved.");
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to save quote.");
@@ -177,7 +178,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
       setError("");
       setMessage("");
       const nextOrder = await orderApi.updateStatus(token, orderNumber, status);
-      setOrder(nextOrder);
+      applyOrder(nextOrder);
       setMessage("Status updated.");
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to update status.");
