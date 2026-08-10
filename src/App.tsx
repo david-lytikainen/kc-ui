@@ -154,7 +154,7 @@ export default function App() {
         ) : null}
         {view === "login" || (view === "profile" && (!user || !token)) ? <AuthPanel onAuthed={handleAuthed} /> : null}
         {view === "profile" && user && token ? <ProfilePage token={token} user={user} onUserChange={setUser} onGalleryChanged={() => setGalleryRefreshToken((current) => current + 1)} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} /> : null}
-        {view === "order" && orderNumber ? <OrderPage orderNumber={orderNumber} token={token} user={user} onBackHome={showHome} /> : null}
+        {view === "order" && orderNumber ? <OrderPage orderNumber={orderNumber} token={token} onBackHome={showHome} /> : null}
       </main>
     </div>
   );

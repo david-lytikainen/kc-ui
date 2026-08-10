@@ -1,12 +1,11 @@
 import { FormEvent, useEffect, useState } from "react";
 
-import { Order, OrderComment, orderApi, User } from "../api";
+import { Order, OrderComment, orderApi } from "../api";
 
 
 type OrderPageProps = {
   orderNumber: string;
   token: string;
-  user: User | null;
   onBackHome: () => void;
 };
 
@@ -20,7 +19,7 @@ function formatCurrency(cents: number | null) {
 }
 
 
-export default function OrderPage({ orderNumber, token, user, onBackHome }: OrderPageProps) {
+export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageProps) {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -31,7 +30,7 @@ export default function OrderPage({ orderNumber, token, user, onBackHome }: Orde
   const [quoteAmount, setQuoteAmount] = useState("");
 
   const authToken = token || undefined;
-  const viewerIsAdmin = Boolean(user && token && order?.viewerIsAdmin);
+  const viewerIsAdmin = Boolean(token && order?.viewerIsAdmin);
 
   const applyOrder = (nextOrder: Order) => {
     setOrder(nextOrder);
