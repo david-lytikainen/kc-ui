@@ -29,8 +29,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
   const [editingBody, setEditingBody] = useState("");
   const [quoteAmount, setQuoteAmount] = useState("");
 
-  const authToken = token || undefined;
-  const viewerIsAdmin = Boolean(token && order?.viewerIsAdmin);
+  const viewerIsAdmin = Boolean(order?.viewerIsAdmin);
 
   const applyOrder = (nextOrder: Order) => {
     setOrder(nextOrder);
@@ -42,7 +41,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
   };
 
   const reloadOrder = async () => {
-    applyOrder(await orderApi.get(orderNumber, authToken));
+    applyOrder(await orderApi.get(orderNumber, token || undefined));
   };
 
   useEffect(() => {
@@ -51,7 +50,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
         setIsLoading(true);
         setError("");
         setMessage("");
-        applyOrder(await orderApi.get(orderNumber, authToken));
+        applyOrder(await orderApi.get(orderNumber, token || undefined));
       } catch (nextError) {
         setError(nextError instanceof Error ? nextError.message : "Unable to load order.");
       } finally {
@@ -60,7 +59,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     }
 
     void loadOrder();
-  }, [authToken, orderNumber]);
+  }, [orderNumber, token]);
 
   useEffect(() => {
     const checkoutSessionId = new URLSearchParams(window.location.search).get("checkout_session_id");
@@ -91,7 +90,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     try {
       setError("");
       setMessage("");
-      await orderApi.createComment(orderNumber, commentBody, authToken);
+      await orderApi.createComment(orderNumber, commentBody, token || undefined);
       setCommentBody("");
       await reloadOrder();
       setMessage("Comment added.");
@@ -104,7 +103,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     try {
       setError("");
       setMessage("");
-      await orderApi.updateComment(orderNumber, commentId, editingBody, authToken);
+      await orderApi.updateComment(orderNumber, commentId, editingBody, token || undefined);
       setEditingCommentId(null);
       setEditingBody("");
       await reloadOrder();
@@ -118,7 +117,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     try {
       setError("");
       setMessage("");
-      await orderApi.deleteComment(orderNumber, commentId, authToken);
+      await orderApi.deleteComment(orderNumber, commentId, token || undefined);
       await reloadOrder();
       setMessage("Comment deleted.");
     } catch (nextError) {
@@ -130,7 +129,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     try {
       setError("");
       setMessage("");
-      await orderApi.sendCommentEmail(orderNumber, comment.id, authToken);
+      await orderApi.sendCommentEmail(orderNumber, comment.id, token || undefined);
       await reloadOrder();
       setMessage("Email sent.");
     } catch (nextError) {
