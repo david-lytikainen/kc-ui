@@ -28,6 +28,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingBody, setEditingBody] = useState("");
   const [quoteAmount, setQuoteAmount] = useState("");
+  const authToken = token || undefined;
 
   const viewerIsAdmin = Boolean(order?.viewerIsAdmin);
 
@@ -40,17 +41,21 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     setQuoteAmount("");
   };
 
+  const clearFeedback = () => {
+    setError("");
+    setMessage("");
+  };
+
   const reloadOrder = async () => {
-    applyOrder(await orderApi.get(orderNumber, token || undefined));
+    applyOrder(await orderApi.get(orderNumber, authToken));
   };
 
   useEffect(() => {
     async function loadOrder() {
       try {
         setIsLoading(true);
-        setError("");
-        setMessage("");
-        applyOrder(await orderApi.get(orderNumber, token || undefined));
+        clearFeedback();
+        applyOrder(await orderApi.get(orderNumber, authToken));
       } catch (nextError) {
         setError(nextError instanceof Error ? nextError.message : "Unable to load order.");
       } finally {
@@ -59,7 +64,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     }
 
     void loadOrder();
-  }, [orderNumber, token]);
+  }, [authToken, orderNumber]);
 
   useEffect(() => {
     const checkoutSessionId = new URLSearchParams(window.location.search).get("checkout_session_id");
@@ -69,8 +74,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
     async function confirmPayment() {
       try {
-        const nextOrder = await orderApi.confirmCheckout(orderNumber, checkoutSessionId);
-        setOrder(nextOrder);
+        applyOrder(await orderApi.confirmCheckout(orderNumber, checkoutSessionId));
         setMessage("Payment confirmed.");
         window.history.replaceState({}, "", `/order/${orderNumber}`);
       } catch (nextError) {
@@ -88,9 +92,8 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
   const handleCommentSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      setError("");
-      setMessage("");
-      await orderApi.createComment(orderNumber, commentBody, token || undefined);
+      clearFeedback();
+      await orderApi.createComment(orderNumber, commentBody, authToken);
       setCommentBody("");
       await reloadOrder();
       setMessage("Comment added.");
@@ -101,9 +104,8 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
   const handleCommentSave = async (commentId: number) => {
     try {
-      setError("");
-      setMessage("");
-      await orderApi.updateComment(orderNumber, commentId, editingBody, token || undefined);
+      clearFeedback();
+      await orderApi.updateComment(orderNumber, commentId, editingBody, authToken);
       setEditingCommentId(null);
       setEditingBody("");
       await reloadOrder();
@@ -115,9 +117,8 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
   const handleCommentDelete = async (commentId: number) => {
     try {
-      setError("");
-      setMessage("");
-      await orderApi.deleteComment(orderNumber, commentId, token || undefined);
+      clearFeedback();
+      await orderApi.deleteComment(orderNumber, commentId, authToken);
       await reloadOrder();
       setMessage("Comment deleted.");
     } catch (nextError) {
@@ -127,9 +128,8 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
   const handleCommentEmail = async (comment: OrderComment) => {
     try {
-      setError("");
-      setMessage("");
-      await orderApi.sendCommentEmail(orderNumber, comment.id, token || undefined);
+      clearFeedback();
+      await orderApi.sendCommentEmail(orderNumber, comment.id, authToken);
       await reloadOrder();
       setMessage("Email sent.");
     } catch (nextError) {
@@ -139,8 +139,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
   const handleDecline = async () => {
     try {
-      setError("");
-      setMessage("");
+      clearFeedback();
       const nextOrder = viewerIsAdmin ? await orderApi.declineAdmin(token, orderNumber) : await orderApi.decline(orderNumber);
       applyOrder(nextOrder);
       setMessage("Order declined.");
@@ -151,7 +150,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
   const handleCreateCheckout = async () => {
     try {
-      setError("");
+      clearFeedback();
       const response = await orderApi.createCheckout(orderNumber);
       window.location.href = response.url;
     } catch (nextError) {
@@ -161,8 +160,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
   const handleQuote = async () => {
     try {
-      setError("");
-      setMessage("");
+      clearFeedback();
       const nextOrder = await orderApi.setQuote(token, orderNumber, quoteAmount);
       applyOrder(nextOrder);
       setMessage("Quote saved.");
@@ -173,8 +171,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
   const handleStatusUpdate = async (status: string) => {
     try {
-      setError("");
-      setMessage("");
+      clearFeedback();
       const nextOrder = await orderApi.updateStatus(token, orderNumber, status);
       applyOrder(nextOrder);
       setMessage("Status updated.");
