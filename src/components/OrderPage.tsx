@@ -71,10 +71,11 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     if (!checkoutSessionId) {
       return;
     }
+    const sessionId = checkoutSessionId;
 
     async function confirmPayment() {
       try {
-        applyOrder(await orderApi.confirmCheckout(orderNumber, checkoutSessionId));
+        applyOrder(await orderApi.confirmCheckout(orderNumber, sessionId));
         setMessage("Payment confirmed.");
         window.history.replaceState({}, "", `/order/${orderNumber}`);
       } catch (nextError) {
