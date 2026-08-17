@@ -44,21 +44,20 @@ export default function GalleryPreview({ refreshToken }: GalleryPreviewProps) {
 
   return (
     <section id="gallery" style={{ display: "grid", gap: 16 }}>
-      <div>
-        <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", color: "#9c6f63" }}>Gallery</p>
-        <h2 style={{ margin: "8px 0 0", fontSize: "1.5rem" }}>Published work</h2>
+      <div style={{ display: "grid", gap: 8, maxWidth: 680 }}>
+        <p style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontSize: "clamp(1.65rem, 5vw, 2.55rem)", fontWeight: 500 }}>Gallery</p>
       </div>
-      {isLoading ? <p style={{ margin: 0, color: "#6a4b43" }}>Loading gallery...</p> : null}
-      {error ? <p style={{ margin: 0, color: "#8f2d1d" }}>{error}</p> : null}
-      {!isLoading && !error && items.length === 0 ? <p style={{ margin: 0, color: "#6a4b43" }}>No gallery items are published yet.</p> : null}
+      {isLoading ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading gallery...</p> : null}
+      {error ? <p style={{ margin: 0, color: "var(--danger)" }}>{error}</p> : null}
+      {!isLoading && !error && items.length === 0 ? <p style={{ margin: 0, color: "var(--muted)" }}>No gallery items are published yet.</p> : null}
       {!isLoading && !error && items.length > 0 ? (
-        <div style={{ display: "grid", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 12 }}>
           {items.map((item) => (
-            <article key={item.id} style={{ overflow: "hidden", border: "1px solid #ead9d2", borderRadius: 14, background: "#ffffff" }}>
-              <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "#f6e7e2" }} />
+            <article key={item.id} style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+              <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "var(--linen)" }} />
               <div style={{ display: "grid", gap: 6, padding: 16 }}>
-                <p style={{ margin: 0, fontWeight: 600 }}>{item.title}</p>
-                <p style={{ margin: 0, color: "#6a4b43", lineHeight: 1.5 }}>{item.description}</p>
+                <p style={{ margin: 0, fontWeight: 700 }}>{item.title}</p>
+                <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{item.description}</p>
               </div>
             </article>
           ))}

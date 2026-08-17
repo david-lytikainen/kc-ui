@@ -134,7 +134,7 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
       setIsUploading(true);
       setGalleryError("");
       const uploaded = await galleryApi.upload(token, file);
-      setDraft((current) => ({ ...current, s3Key: uploaded.s3Key }));
+      setDraft((current) => ({ ...current, imageUrl: uploaded.previewUrl, s3Key: uploaded.s3Key }));
       setUploadedPreviewUrl(uploaded.previewUrl);
       setGalleryMessage("Image uploaded.");
     } catch (nextError) {
@@ -156,6 +156,9 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
     try {
       setGalleryError("");
       setGalleryMessage("");
+      if (!draft.imageUrl && !draft.s3Key) {
+        throw new Error("Upload an image before saving this gallery item.");
+      }
       if (isEditing && editingId !== null) {
         await galleryApi.update(token, editingId, draft);
       } else {
@@ -253,89 +256,87 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
 
   return (
     <section style={{ display: "grid", gap: 16 }}>
-      <div>
-        <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", color: "#9c6f63" }}>Profile</p>
-        <h2 style={{ margin: "8px 0 0", fontSize: "1.5rem" }}>{user.name}</h2>
+      <div style={{ display: "grid", gap: 8, maxWidth: 680 }}>
+        <p style={{ margin: 0, color: "var(--leaf-700)", fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase" }}>Profile</p>
+        <h2 style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontSize: "clamp(1.6rem, 4vw, 2.2rem)", fontWeight: 500 }}>{user.name}</h2>
       </div>
-      <form onSubmit={handleProfileSubmit} style={{ display: "grid", gap: 12, padding: 16, border: "1px solid #ead9d2", borderRadius: 14, background: "#ffffff" }}>
-        <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Name" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
-        <input value={user.email} readOnly style={{ width: "100%", padding: 14, border: "1px solid #ead9d2", borderRadius: 10, fontSize: "1rem", color: "#6a4b43", background: "#faf3f0" }} />
-        <p style={{ margin: 0, color: "#6a4b43" }}>Role: {user.role}</p>
-        {profileError ? <p style={{ margin: 0, color: "#8f2d1d" }}>{profileError}</p> : null}
-        {profileMessage ? <p style={{ margin: 0, color: "#2c6e49" }}>{profileMessage}</p> : null}
-        <button type="submit" disabled={isSavingProfile} style={{ border: "none", borderRadius: 10, padding: "14px 16px", background: "#2f1712", color: "#ffffff", fontSize: "1rem", fontWeight: 700, cursor: "pointer", opacity: isSavingProfile ? 0.7 : 1 }}>{isSavingProfile ? "Saving..." : "Save profile"}</button>
+      <form onSubmit={handleProfileSubmit} style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+        <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Name" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
+        <input value={user.email} readOnly style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "var(--linen)", color: "var(--muted)", fontSize: "1rem" }} />
+        <p style={{ margin: 0, color: "var(--muted)" }}>Role: {user.role}</p>
+        {profileError ? <p style={{ margin: 0, color: "var(--danger)" }}>{profileError}</p> : null}
+        {profileMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{profileMessage}</p> : null}
+        <button type="submit" disabled={isSavingProfile} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{isSavingProfile ? "Saving..." : "Save profile"}</button>
       </form>
 
       {user.role === "admin" ? (
         <>
-          <details style={{ border: "1px solid #ead9d2", borderRadius: 14, background: "#ffffff", overflow: "hidden" }} open>
-            <summary style={{ padding: 16, cursor: "pointer", fontWeight: 700 }}>Admin Tools</summary>
-            <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid #ead9d2" }}>
+          <details open style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+            <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Admin Tools</summary>
+            <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid var(--line)" }}>
               <div>
-                <p style={{ margin: 0, fontWeight: 700 }}>Gallery management</p>
-                <p style={{ margin: "6px 0 0", color: "#6a4b43", lineHeight: 1.5 }}>Create, edit, delete, upload, and drag-drop reorder gallery items from Kyra&apos;s profile.</p>
+                <p style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Gallery management</p>
+                <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>Create, edit, delete, upload, and drag-drop reorder gallery items from Kyra&apos;s profile.</p>
               </div>
               <form onSubmit={handleGallerySubmit} style={{ display: "grid", gap: 12 }}>
-                <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
-                <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem", resize: "vertical" }} />
-                <input value={draft.imageUrl} onChange={(event) => setDraft((current) => ({ ...current, imageUrl: event.target.value }))} placeholder="Signed or fallback image URL" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
-                <input value={draft.s3Key} onChange={(event) => setDraft((current) => ({ ...current, s3Key: event.target.value }))} placeholder="S3 key" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
-                <label style={{ display: "grid", gap: 8, color: "#6a4b43" }}>
-                  <span>Upload image to S3</span>
+                <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
+                <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem", resize: "vertical" }} />
+                <label style={{ display: "grid", gap: 8, color: "var(--muted)" }}>
+                  <span>Artwork image</span>
                   <input type="file" accept="image/*" onChange={handleUpload} />
                 </label>
-                {uploadedPreviewUrl ? <img src={uploadedPreviewUrl} alt="Uploaded preview" style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 10, background: "#f6e7e2" }} /> : null}
-                {galleryError ? <p style={{ margin: 0, color: "#8f2d1d" }}>{galleryError}</p> : null}
-                {galleryMessage ? <p style={{ margin: 0, color: "#2c6e49" }}>{galleryMessage}</p> : null}
-                <div style={{ display: "flex", gap: 12 }}>
-                  <button type="submit" disabled={isUploading} style={{ border: "none", borderRadius: 10, padding: "14px 16px", background: "#2f1712", color: "#ffffff", fontSize: "1rem", fontWeight: 700, cursor: "pointer", opacity: isUploading ? 0.7 : 1 }}>{isEditing ? "Update item" : "Create item"}</button>
-                  {isEditing ? <button type="button" onClick={resetDraft} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "14px 16px", background: "#ffffff", color: "#2f1712", fontSize: "1rem", fontWeight: 700, cursor: "pointer" }}>Cancel edit</button> : null}
+                {uploadedPreviewUrl ? <img src={uploadedPreviewUrl} alt="Uploaded preview" style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} /> : null}
+                {galleryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{galleryError}</p> : null}
+                {galleryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{galleryMessage}</p> : null}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+                  <button type="submit" disabled={isUploading} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{isEditing ? "Update item" : "Create item"}</button>
+                  {isEditing ? <button type="button" onClick={resetDraft} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Cancel edit</button> : null}
                 </div>
               </form>
 
-              {isLoadingItems ? <p style={{ margin: 0, color: "#6a4b43" }}>Loading admin gallery...</p> : null}
+              {isLoadingItems ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading admin gallery...</p> : null}
               {!isLoadingItems ? (
                 <div style={{ display: "grid", gap: 12 }}>
                   {items.map((item) => (
-                    <article key={item.id} draggable onDragStart={() => setDraggingId(item.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(item.id)} style={{ display: "grid", gap: 10, padding: 14, border: "1px solid #ead9d2", borderRadius: 12, background: "#fffaf8" }}>
-                      <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 10, background: "#f6e7e2" }} />
-                      <div style={{ display: "grid", gap: 6 }}>
+                    <article key={item.id} draggable onDragStart={() => setDraggingId(item.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(item.id)} style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+                      <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} />
+                      <div style={{ display: "grid", gap: 8 }}>
                         <p style={{ margin: 0, fontWeight: 700 }}>{item.title}</p>
-                        <p style={{ margin: 0, color: "#6a4b43", lineHeight: 1.5 }}>{item.description}</p>
-                        <p style={{ margin: 0, color: "#9c6f63", fontSize: "0.85rem" }}>Drag to reorder</p>
+                        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{item.description}</p>
+                        <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>Drag to reorder</p>
                       </div>
-                      <div style={{ display: "flex", gap: 12 }}>
-                        <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "" }); setUploadedPreviewUrl(item.imageUrl); }} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "12px 14px", background: "#ffffff", color: "#2f1712", fontSize: "0.95rem", fontWeight: 700, cursor: "pointer" }}>Edit</button>
-                        <button type="button" onClick={() => void handleDelete(item.id)} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "12px 14px", background: "#ffffff", color: "#8f2d1d", fontSize: "0.95rem", fontWeight: 700, cursor: "pointer" }}>Delete</button>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+                        <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "" }); setUploadedPreviewUrl(item.imageUrl); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                        <button type="button" onClick={() => void handleDelete(item.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
                       </div>
                     </article>
                   ))}
-                  {items.length > 1 ? <button type="button" onClick={() => void saveOrder()} style={{ border: "none", borderRadius: 10, padding: "14px 16px", background: "#2f1712", color: "#ffffff", fontSize: "1rem", fontWeight: 700, cursor: "pointer" }}>Save gallery order</button> : null}
+                  {items.length > 1 ? <button type="button" onClick={() => void saveOrder()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Save gallery order</button> : null}
                 </div>
               ) : null}
 
               <section style={{ display: "grid", gap: 12 }}>
                 <div>
-                  <p style={{ margin: 0, fontWeight: 700 }}>Commission categories</p>
-                  <p style={{ margin: "6px 0 0", color: "#6a4b43", lineHeight: 1.5 }}>Create, rename, and archive category options for new commission requests.</p>
+                  <p style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Commission categories</p>
+                  <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>Create, rename, and archive category options for new commission requests.</p>
                 </div>
                 <form onSubmit={handleCategorySubmit} style={{ display: "grid", gap: 12 }}>
-                  <input value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="Category name" style={{ width: "100%", padding: 14, border: "1px solid #d9c4bd", borderRadius: 10, fontSize: "1rem" }} />
-                  {categoryError ? <p style={{ margin: 0, color: "#8f2d1d" }}>{categoryError}</p> : null}
-                  {categoryMessage ? <p style={{ margin: 0, color: "#2c6e49" }}>{categoryMessage}</p> : null}
-                  <div style={{ display: "flex", gap: 12 }}>
-                    <button type="submit" style={{ border: "none", borderRadius: 10, padding: "14px 16px", background: "#2f1712", color: "#ffffff", fontSize: "1rem", fontWeight: 700, cursor: "pointer" }}>{editingCategoryId !== null ? "Update category" : "Create category"}</button>
-                    {editingCategoryId !== null ? <button type="button" onClick={() => { setEditingCategoryId(null); setCategoryName(""); }} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "14px 16px", background: "#ffffff", color: "#2f1712", fontSize: "1rem", fontWeight: 700, cursor: "pointer" }}>Cancel edit</button> : null}
+                  <input value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="Category name" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
+                  {categoryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{categoryError}</p> : null}
+                  {categoryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{categoryMessage}</p> : null}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+                    <button type="submit" style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{editingCategoryId !== null ? "Update category" : "Create category"}</button>
+                    {editingCategoryId !== null ? <button type="button" onClick={() => { setEditingCategoryId(null); setCategoryName(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Cancel edit</button> : null}
                   </div>
                 </form>
                 <div style={{ display: "grid", gap: 12 }}>
                   {categories.map((category) => (
-                    <div key={category.id} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #ead9d2", borderRadius: 12, background: category.isArchived ? "#faf3f0" : "#fffaf8" }}>
+                    <div key={category.id} style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
                       <p style={{ margin: 0, fontWeight: 700 }}>{category.name}</p>
-                      <p style={{ margin: 0, color: "#6a4b43" }}>{category.isArchived ? "Archived" : "Active"}</p>
-                      <div style={{ display: "flex", gap: 12 }}>
-                        <button type="button" onClick={() => { setEditingCategoryId(category.id); setCategoryName(category.name); }} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "10px 12px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer" }}>Edit</button>
-                        <button type="button" onClick={() => void toggleArchiveCategory(category)} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "10px 12px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer" }}>{category.isArchived ? "Restore" : "Archive"}</button>
+                      <p style={{ margin: 0, color: "var(--muted)" }}>{category.isArchived ? "Archived" : "Active"}</p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+                        <button type="button" onClick={() => { setEditingCategoryId(category.id); setCategoryName(category.name); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                        <button type="button" onClick={() => void toggleArchiveCategory(category)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>{category.isArchived ? "Restore" : "Archive"}</button>
                       </div>
                     </div>
                   ))}
@@ -344,27 +345,27 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
             </div>
           </details>
 
-          <details style={{ border: "1px solid #ead9d2", borderRadius: 14, background: "#ffffff", overflow: "hidden" }} open>
-            <summary style={{ padding: 16, cursor: "pointer", fontWeight: 700 }}>All Orders</summary>
-            <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid #ead9d2" }}>
-              {ordersError ? <p style={{ margin: 0, color: "#8f2d1d" }}>{ordersError}</p> : null}
-              {isLoadingOrders ? <p style={{ margin: 0, color: "#6a4b43" }}>Loading orders...</p> : null}
+          <details open style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+            <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>All Orders</summary>
+            <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid var(--line)" }}>
+              {ordersError ? <p style={{ margin: 0, color: "var(--danger)" }}>{ordersError}</p> : null}
+              {isLoadingOrders ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading orders...</p> : null}
               {!isLoadingOrders ? (
                 <div style={{ display: "grid", gap: 12 }}>
                   {orders.map((order) => (
-                    <article key={order.orderNumber} style={{ display: "grid", gap: 8, padding: 14, border: "1px solid #ead9d2", borderRadius: 12, background: "#fffaf8" }}>
+                    <article key={order.orderNumber} style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
                       <p style={{ margin: 0, fontWeight: 700 }}>Order {order.orderNumber}</p>
-                      <p style={{ margin: 0, color: "#6a4b43" }}>{order.customerName} · {order.categoryName}</p>
-                      <p style={{ margin: 0, color: "#6a4b43" }}>Status: {order.status}</p>
-                      <button type="button" onClick={() => onOpenOrder(order.orderNumber)} style={{ justifySelf: "start", border: "none", borderRadius: 10, padding: "12px 14px", background: "#2f1712", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}>Open order</button>
+                      <p style={{ margin: 0, color: "var(--muted)" }}>{order.customerName} · {order.categoryName}</p>
+                      <p style={{ margin: 0, color: "var(--muted)" }}>Status: {order.status}</p>
+                      <button type="button" onClick={() => onOpenOrder(order.orderNumber)} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800 }}>Open order</button>
                     </article>
                   ))}
                 </div>
               ) : null}
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <button type="button" disabled={ordersPage === 1} onClick={() => setOrdersPage((current) => current - 1)} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "12px 14px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer", opacity: ordersPage === 1 ? 0.6 : 1 }}>Previous</button>
-                <p style={{ margin: 0, color: "#6a4b43" }}>Page {ordersPage} of {totalPages}</p>
-                <button type="button" disabled={ordersPage >= totalPages} onClick={() => setOrdersPage((current) => current + 1)} style={{ border: "1px solid #d9c4bd", borderRadius: 10, padding: "12px 14px", background: "#ffffff", color: "#2f1712", fontWeight: 700, cursor: "pointer", opacity: ordersPage >= totalPages ? 0.6 : 1 }}>Next</button>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+                <button type="button" disabled={ordersPage === 1} onClick={() => setOrdersPage((current) => current - 1)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Previous</button>
+                <p style={{ margin: 0, color: "var(--muted)" }}>Page {ordersPage} of {totalPages}</p>
+                <button type="button" disabled={ordersPage >= totalPages} onClick={() => setOrdersPage((current) => current + 1)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Next</button>
               </div>
             </div>
           </details>
