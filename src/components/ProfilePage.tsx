@@ -39,10 +39,40 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   const [ordersTotal, setOrdersTotal] = useState(0);
   const [isLoadingOrders, setIsLoadingOrders] = useState(user.role === "admin");
   const [ordersError, setOrdersError] = useState("");
+  const [galleryColumns, setGalleryColumns] = useState(() => {
+    if (typeof window === "undefined") {
+      return 2;
+    }
+    if (window.innerWidth >= 1024) {
+      return 5;
+    }
+    if (window.innerWidth >= 768) {
+      return 3;
+    }
+    return 2;
+  });
 
   useEffect(() => {
     setName(user.name);
   }, [user.name]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setGalleryColumns(5);
+        return;
+      }
+      if (window.innerWidth >= 768) {
+        setGalleryColumns(3);
+        return;
+      }
+      setGalleryColumns(2);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (user.role !== "admin") {
@@ -253,6 +283,7 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   };
 
   const totalPages = Math.max(1, Math.ceil(ordersTotal / 10));
+  const editGalleryGridColumns = `repeat(${galleryColumns}, minmax(0, 1fr))`;
 
   return (
     <section style={{ display: "grid", gap: 16 }}>
@@ -271,55 +302,65 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
 
       {user.role === "admin" ? (
         <>
-          <details open style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-            <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Admin Tools</summary>
-            <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid var(--line)" }}>
-              <div>
-                <p style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Gallery management</p>
-                <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>Create, edit, delete, upload, and drag-drop reorder gallery items from Kyra&apos;s profile.</p>
+          <section style={{ display: "grid", gap: 12 }}>
+            <div>
+              <p style={{ margin: 0, color: "var(--leaf-700)", fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase" }}>Admin Tools</p>
+              <h3 style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontSize: "clamp(1.35rem, 3vw, 1.8rem)", fontWeight: 500 }}>Manage gallery, categories, and orders.</h3>
+            </div>
+
+            <details open={isEditing} style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+              <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>{isEditing ? "Edit Gallery Item" : "Create Gallery Item"}</summary>
+              <div style={{ display: "grid", gap: 12, padding: 16, borderTop: "1px solid var(--line)" }}>
+                <form onSubmit={handleGallerySubmit} style={{ display: "grid", gap: 12 }}>
+                  <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
+                  <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem", resize: "vertical" }} />
+                  <input value={draft.imageUrl} onChange={(event) => setDraft((current) => ({ ...current, imageUrl: event.target.value }))} placeholder="Signed or fallback image URL" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
+                  <input value={draft.s3Key} onChange={(event) => setDraft((current) => ({ ...current, s3Key: event.target.value }))} placeholder="S3 key" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
+                  <label style={{ display: "grid", gap: 8, color: "var(--muted)" }}>
+                    <span>Artwork image</span>
+                    <input type="file" accept="image/*" onChange={handleUpload} />
+                  </label>
+                  {uploadedPreviewUrl ? <img src={uploadedPreviewUrl} alt="Uploaded preview" style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} /> : null}
+                  {galleryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{galleryError}</p> : null}
+                  {galleryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{galleryMessage}</p> : null}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+                    <button type="submit" disabled={isUploading} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)", opacity: isUploading ? 0.7 : 1 }}>{isEditing ? "Update item" : "Create item"}</button>
+                    {isEditing ? <button type="button" onClick={resetDraft} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Cancel edit</button> : null}
+                  </div>
+                </form>
               </div>
-              <form onSubmit={handleGallerySubmit} style={{ display: "grid", gap: 12 }}>
-                <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
-                <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem", resize: "vertical" }} />
-                <label style={{ display: "grid", gap: 8, color: "var(--muted)" }}>
-                  <span>Artwork image</span>
-                  <input type="file" accept="image/*" onChange={handleUpload} />
-                </label>
-                {uploadedPreviewUrl ? <img src={uploadedPreviewUrl} alt="Uploaded preview" style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} /> : null}
-                {galleryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{galleryError}</p> : null}
-                {galleryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{galleryMessage}</p> : null}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                  <button type="submit" disabled={isUploading} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{isEditing ? "Update item" : "Create item"}</button>
-                  {isEditing ? <button type="button" onClick={resetDraft} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Cancel edit</button> : null}
-                </div>
-              </form>
+            </details>
 
-              {isLoadingItems ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading admin gallery...</p> : null}
-              {!isLoadingItems ? (
-                <div style={{ display: "grid", gap: 12 }}>
-                  {items.map((item) => (
-                    <article key={item.id} draggable onDragStart={() => setDraggingId(item.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(item.id)} style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-                      <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} />
-                      <div style={{ display: "grid", gap: 8 }}>
-                        <p style={{ margin: 0, fontWeight: 700 }}>{item.title}</p>
-                        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{item.description}</p>
-                        <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>Drag to reorder</p>
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                        <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "" }); setUploadedPreviewUrl(item.imageUrl); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
-                        <button type="button" onClick={() => void handleDelete(item.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
-                      </div>
-                    </article>
-                  ))}
-                  {items.length > 1 ? <button type="button" onClick={() => void saveOrder()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Save gallery order</button> : null}
-                </div>
-              ) : null}
+            <details open style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+              <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Edit Gallery</summary>
+              <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid var(--line)" }}>
+                {isLoadingItems ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading admin gallery...</p> : null}
+                {!isLoadingItems ? (
+                  <div style={{ display: "grid", gap: 12 }}>
+                    <div style={{ display: "grid", gap: 12, gridTemplateColumns: editGalleryGridColumns }}>
+                      {items.map((item) => (
+                        <article key={item.id} draggable onDragStart={() => setDraggingId(item.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(item.id)} style={{ position: "relative", display: "grid", gap: 10, minHeight: 148, padding: 14, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+                          <span style={{ position: "absolute", top: 12, right: 12, color: "var(--leaf-700)", fontSize: "1rem", fontWeight: 700, letterSpacing: 1, cursor: "grab" }} aria-hidden="true">⋮⋮</span>
+                          <div style={{ display: "grid", gap: 6, paddingRight: 24 }}>
+                            <p style={{ margin: 0, fontWeight: 700 }}>{item.title}</p>
+                            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>Drag to reorder</p>
+                          </div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
+                            <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "" }); setUploadedPreviewUrl(item.imageUrl); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                            <button type="button" onClick={() => void handleDelete(item.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                    {items.length > 1 ? <button type="button" onClick={() => void saveOrder()} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Save gallery order</button> : null}
+                  </div>
+                ) : null}
+              </div>
+            </details>
 
-              <section style={{ display: "grid", gap: 12 }}>
-                <div>
-                  <p style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Commission categories</p>
-                  <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>Create, rename, and archive category options for new commission requests.</p>
-                </div>
+            <details open style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+              <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Categories</summary>
+              <div style={{ display: "grid", gap: 12, padding: 16, borderTop: "1px solid var(--line)" }}>
                 <form onSubmit={handleCategorySubmit} style={{ display: "grid", gap: 12 }}>
                   <input value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="Category name" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
                   {categoryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{categoryError}</p> : null}
@@ -341,9 +382,9 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                     </div>
                   ))}
                 </div>
-              </section>
-            </div>
-          </details>
+              </div>
+            </details>
+          </section>
 
           <details open style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
             <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>All Orders</summary>
