@@ -15,6 +15,20 @@ type ProfilePageProps = {
 const emptyDraft: GalleryDraft = { title: "", description: "", imageUrl: "", s3Key: "" };
 
 
+function getGalleryColumns() {
+  if (typeof window === "undefined") {
+    return 2;
+  }
+  if (window.innerWidth >= 1024) {
+    return 5;
+  }
+  if (window.innerWidth >= 768) {
+    return 3;
+  }
+  return 2;
+}
+
+
 export default function ProfilePage({ token, user, onUserChange, onGalleryChanged, onOpenOrder }: ProfilePageProps) {
   const [name, setName] = useState(user.name);
   const [profileMessage, setProfileMessage] = useState("");
@@ -39,36 +53,14 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   const [ordersTotal, setOrdersTotal] = useState(0);
   const [isLoadingOrders, setIsLoadingOrders] = useState(user.role === "admin");
   const [ordersError, setOrdersError] = useState("");
-  const [galleryColumns, setGalleryColumns] = useState(() => {
-    if (typeof window === "undefined") {
-      return 2;
-    }
-    if (window.innerWidth >= 1024) {
-      return 5;
-    }
-    if (window.innerWidth >= 768) {
-      return 3;
-    }
-    return 2;
-  });
+  const [galleryColumns, setGalleryColumns] = useState(getGalleryColumns);
 
   useEffect(() => {
     setName(user.name);
   }, [user.name]);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setGalleryColumns(5);
-        return;
-      }
-      if (window.innerWidth >= 768) {
-        setGalleryColumns(3);
-        return;
-      }
-      setGalleryColumns(2);
-    };
-
+    const handleResize = () => setGalleryColumns(getGalleryColumns());
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -83,25 +75,20 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
       try {
         setIsLoadingItems(true);
         setGalleryError("");
-        setItems(await galleryApi.listAdmin(token));
+        setCategoryError("");
+        const [nextItems, nextCategories] = await Promise.all([galleryApi.listAdmin(token), categoryApi.listAdmin(token)]);
+        setItems(nextItems);
+        setCategories(nextCategories);
       } catch (nextError) {
-        setGalleryError(nextError instanceof Error ? nextError.message : "Unable to load admin gallery.");
+        const message = nextError instanceof Error ? nextError.message : "Unable to load admin tools.";
+        setGalleryError(message);
+        setCategoryError(message);
       } finally {
         setIsLoadingItems(false);
       }
     }
 
-    async function loadCategories() {
-      try {
-        setCategoryError("");
-        setCategories(await categoryApi.listAdmin(token));
-      } catch (nextError) {
-        setCategoryError(nextError instanceof Error ? nextError.message : "Unable to load categories.");
-      }
-    }
-
     void loadAdminState();
-    void loadCategories();
   }, [token, user.role]);
 
   useEffect(() => {
