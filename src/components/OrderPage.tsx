@@ -31,10 +31,11 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
   const authToken = token || undefined;
 
   const viewerIsAdmin = Boolean(order?.viewerIsAdmin);
+  const isGalleryOrder = order?.orderKind === "gallery";
 
   const applyOrder = (nextOrder: Order) => {
     setOrder(nextOrder);
-    if (nextOrder.quoteAmountCents !== null) {
+    if (nextOrder.orderKind === "commission" && nextOrder.quoteAmountCents !== null) {
       setQuoteAmount((nextOrder.quoteAmountCents / 100).toFixed(2));
       return;
     }
@@ -85,6 +86,16 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
     void confirmPayment();
   }, [orderNumber]);
+
+  useEffect(() => {
+    if (!order?.paymentPending) {
+      return;
+    }
+    const timeoutId = window.setTimeout(() => {
+      void reloadOrder();
+    }, 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [order?.paymentPending]);
 
   const ownRole = viewerIsAdmin ? "admin" : "customer";
 
@@ -188,21 +199,33 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
       <div style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
         <p style={{ margin: 0 }}>Status: <strong>{order.status}</strong></p>
         <p style={{ margin: 0 }}>Category: {order.categoryName}</p>
-        <p style={{ margin: 0 }}>Medium: {order.medium}</p>
-        <p style={{ margin: 0 }}>Size: {order.size}</p>
-        <p style={{ margin: 0 }}>Phone: {order.customerPhone}</p>
         <p style={{ margin: 0 }}>Email: {order.customerEmail}</p>
-        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{order.instructions}</p>
-        <p style={{ margin: 0 }}>Quote: {formatCurrency(order.quoteAmountCents)}</p>
+        {!isGalleryOrder ? <p style={{ margin: 0 }}>Phone: {order.customerPhone}</p> : null}
+        {!isGalleryOrder ? <p style={{ margin: 0 }}>Medium: {order.medium}</p> : null}
+        {!isGalleryOrder ? <p style={{ margin: 0 }}>Size: {order.size}</p> : null}
+        {!isGalleryOrder ? <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{order.instructions}</p> : null}
+        <p style={{ margin: 0 }}>{isGalleryOrder ? "Amount" : "Quote"}: {formatCurrency(order.quoteAmountCents)}</p>
+        {isGalleryOrder && order.galleryImageUrl ? <img src={order.galleryImageUrl} alt={order.categoryName} style={{ display: "block", width: "min(100%, 420px)", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} /> : null}
         {order.files.length ? (
           <div style={{ display: "grid", gap: 8 }}>
-            <p style={{ margin: 0, fontWeight: 700 }}>Reference images</p>
+            <p style={{ margin: 0, fontWeight: 700 }}>{isGalleryOrder ? "Artwork" : "Reference images"}</p>
             {order.files.map((file) => <a key={file.id} href={file.fileUrl} target="_blank" rel="noreferrer">{file.fileName}</a>)}
           </div>
         ) : null}
+        {isGalleryOrder ? (
+          <div style={{ display: "grid", gap: 4 }}>
+            <p style={{ margin: 0, fontWeight: 700 }}>Shipping</p>
+            <p style={{ margin: 0 }}>{order.shippingName || order.customerName}</p>
+            {order.shippingLine1 ? <p style={{ margin: 0 }}>{order.shippingLine1}</p> : null}
+            {order.shippingLine2 ? <p style={{ margin: 0 }}>{order.shippingLine2}</p> : null}
+            {(order.shippingCity || order.shippingState || order.shippingPostalCode) ? <p style={{ margin: 0 }}>{[order.shippingCity, order.shippingState, order.shippingPostalCode].filter(Boolean).join(", ")}</p> : null}
+            {order.shippingCountry ? <p style={{ margin: 0 }}>{order.shippingCountry}</p> : null}
+          </div>
+        ) : null}
+        {isGalleryOrder && order.paymentPending ? <p style={{ margin: 0, color: "var(--muted)" }}>Payment is still processing. This page will refresh automatically.</p> : null}
       </div>
 
-      {!viewerIsAdmin && order.status === "quoted" ? (
+      {!viewerIsAdmin && !isGalleryOrder && order.status === "quoted" ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
           <button type="button" onClick={() => void handleDecline()} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Decline quote</button>
           <button type="button" onClick={() => void handleCreateCheckout()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Pay quote</button>
@@ -212,12 +235,14 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
       {viewerIsAdmin ? (
         <div style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
           <p style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Admin controls</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-            <input value={quoteAmount} onChange={(event) => setQuoteAmount(event.target.value)} placeholder="Quote amount" style={{ flex: "1 1 180px", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
-            <button type="button" onClick={() => void handleQuote()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Save quote</button>
-            <button type="button" onClick={() => void handleDecline()} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Decline order</button>
-            {order.status !== "accepted" ? <button type="button" onClick={() => void handleStatusUpdate("accepted")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Mark accepted</button> : null}
-          </div>
+          {!isGalleryOrder ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+              <input value={quoteAmount} onChange={(event) => setQuoteAmount(event.target.value)} placeholder="Quote amount" style={{ flex: "1 1 180px", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
+              <button type="button" onClick={() => void handleQuote()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Save quote</button>
+              <button type="button" onClick={() => void handleDecline()} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Decline order</button>
+              {order.status !== "accepted" ? <button type="button" onClick={() => void handleStatusUpdate("accepted")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Mark accepted</button> : null}
+            </div>
+          ) : null}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
             <button type="button" onClick={() => void handleStatusUpdate("in_progress")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Mark in progress</button>
             <button type="button" onClick={() => void handleStatusUpdate("shipped")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Mark shipped</button>
@@ -226,7 +251,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
         </div>
       ) : null}
 
-      <section style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+      {!isGalleryOrder ? <section style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
         <p style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Comments</p>
         {order.comments.map((comment) => (
           <article key={comment.id} id={`comment-${comment.id}`} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid var(--line)", borderRadius: 8, background: comment.authorRole === "admin" ? "rgba(247, 241, 231, 0.92)" : "rgba(255, 253, 248, 0.86)" }}>
@@ -253,7 +278,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
           <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} placeholder={viewerIsAdmin ? "Add an admin comment" : "Add a customer comment"} rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem", resize: "vertical" }} />
           <button type="submit" style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Add comment</button>
         </form>
-      </section>
+      </section> : null}
 
       {error ? <p style={{ margin: 0, color: "var(--danger)" }}>{error}</p> : null}
       {message ? <p style={{ margin: 0, color: "var(--success)" }}>{message}</p> : null}

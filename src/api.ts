@@ -60,6 +60,7 @@ export type OrderComment = {
 };
 
 export type Order = {
+  orderKind: string;
   orderNumber: string;
   customerName: string;
   customerEmail: string;
@@ -72,6 +73,15 @@ export type Order = {
   size: string;
   status: string;
   quoteAmountCents: number | null;
+  galleryImageUrl: string | null;
+  shippingName: string | null;
+  shippingLine1: string | null;
+  shippingLine2: string | null;
+  shippingCity: string | null;
+  shippingState: string | null;
+  shippingPostalCode: string | null;
+  shippingCountry: string | null;
+  paymentPending: boolean;
   createdAt: string;
   updatedAt: string;
   viewerIsAdmin: boolean;
