@@ -147,7 +147,6 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
 export const authApi = {
   login: (email: string, password: string) => request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   validateToken: (token: string) => request<User>("/auth/validate-token", { method: "GET" }, token),
-  updateProfile: (token: string, name: string) => request<User>("/profile", { method: "PATCH", body: JSON.stringify({ name }) }, token),
 };
 
 export const galleryApi = {
