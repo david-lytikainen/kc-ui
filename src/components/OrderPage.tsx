@@ -191,12 +191,12 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
   return (
     <section style={{ display: "grid", gap: 16 }}>
-      <button type="button" onClick={onBackHome} style={{ justifySelf: "start", border: 0, background: "transparent", color: "var(--leaf-800)", padding: 0, fontWeight: 700 }}>Back home</button>
+      <button type="button" onClick={onBackHome} style={{ justifySelf: "start", border: 0, background: "transparent", color: "var(--text-dark)", padding: 0, fontWeight: 700 }}>Back home</button>
       <div style={{ display: "grid", gap: 8, maxWidth: 680 }}>
         <p style={{ margin: 0, color: "var(--leaf-700)", fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase" }}>Order {order.orderNumber}</p>
-        <h2 style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontSize: "clamp(1.6rem, 4vw, 2.2rem)", fontWeight: 500 }}>{order.customerName}</h2>
+        <h2 style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontSize: "clamp(1.6rem, 4vw, 2.2rem)", fontWeight: 500 }}>{order.customerName}</h2>
       </div>
-      <div style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+      <div style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
         <p style={{ margin: 0 }}>Status: <strong>{order.status}</strong></p>
         <p style={{ margin: 0 }}>Category: {order.categoryName}</p>
         <p style={{ margin: 0 }}>Email: {order.customerEmail}</p>
@@ -228,55 +228,55 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
       {!viewerIsAdmin && !isGalleryOrder && order.status === "quoted" ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
           <button type="button" onClick={() => void handleDecline()} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Decline quote</button>
-          <button type="button" onClick={() => void handleCreateCheckout()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Pay quote</button>
+          <button type="button" onClick={() => void handleCreateCheckout()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Pay quote</button>
         </div>
       ) : null}
 
       {viewerIsAdmin ? (
-        <div style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-          <p style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Admin controls</p>
+        <div style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+          <p style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Admin controls</p>
           {!isGalleryOrder ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-              <input value={quoteAmount} onChange={(event) => setQuoteAmount(event.target.value)} placeholder="Quote amount" style={{ flex: "1 1 180px", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
-              <button type="button" onClick={() => void handleQuote()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Save quote</button>
+              <input value={quoteAmount} onChange={(event) => setQuoteAmount(event.target.value)} placeholder="Quote amount" style={{ flex: "1 1 180px", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }} />
+              <button type="button" onClick={() => void handleQuote()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Save quote</button>
               <button type="button" onClick={() => void handleDecline()} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Decline order</button>
-              {order.status !== "accepted" ? <button type="button" onClick={() => void handleStatusUpdate("accepted")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Mark accepted</button> : null}
+              {order.status !== "accepted" ? <button type="button" onClick={() => void handleStatusUpdate("accepted")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Mark accepted</button> : null}
             </div>
           ) : null}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-            <button type="button" onClick={() => void handleStatusUpdate("in_progress")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Mark in progress</button>
-            <button type="button" onClick={() => void handleStatusUpdate("shipped")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Mark shipped</button>
-            <button type="button" onClick={() => void handleStatusUpdate("delivered")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Mark delivered</button>
+            <button type="button" onClick={() => void handleStatusUpdate("in_progress")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Mark in progress</button>
+            <button type="button" onClick={() => void handleStatusUpdate("shipped")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Mark shipped</button>
+            <button type="button" onClick={() => void handleStatusUpdate("delivered")} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Mark delivered</button>
           </div>
         </div>
       ) : null}
 
-      {!isGalleryOrder ? <section style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-        <p style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Comments</p>
+      {!isGalleryOrder ? <section style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+        <p style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Comments</p>
         {order.comments.map((comment) => (
-          <article key={comment.id} id={`comment-${comment.id}`} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid var(--line)", borderRadius: 8, background: comment.authorRole === "admin" ? "rgba(247, 241, 231, 0.92)" : "rgba(255, 253, 248, 0.86)" }}>
+          <article key={comment.id} id={`comment-${comment.id}`} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid var(--line)", borderRadius: 8, background: comment.authorRole === "admin" ? "var(--bg-navbar)" : "var(--bg-panel)" }}>
             <p style={{ margin: 0, fontWeight: 700 }}>{comment.authorRole === "admin" ? "Admin" : "Customer"} comment</p>
             <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{new Date(comment.updatedAt).toLocaleString()}</p>
             {editingCommentId === comment.id ? (
               <div style={{ display: "grid", gap: 8 }}>
-                <textarea value={editingBody} onChange={(event) => setEditingBody(event.target.value)} rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem", resize: "vertical" }} />
+                <textarea value={editingBody} onChange={(event) => setEditingBody(event.target.value)} rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem", resize: "vertical" }} />
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                  <button type="button" onClick={() => void handleCommentSave(comment.id)} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800 }}>Save comment</button>
-                  <button type="button" onClick={() => { setEditingCommentId(null); setEditingBody(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Cancel</button>
+                  <button type="button" onClick={() => void handleCommentSave(comment.id)} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>Save comment</button>
+                  <button type="button" onClick={() => { setEditingCommentId(null); setEditingBody(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel</button>
                 </div>
               </div>
             ) : <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{comment.body}</p>}
             {editableCommentIds.has(comment.id) && editingCommentId !== comment.id ? (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                <button type="button" onClick={() => { setEditingCommentId(comment.id); setEditingBody(comment.body); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                <button type="button" onClick={() => { setEditingCommentId(comment.id); setEditingBody(comment.body); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Edit</button>
                 <button type="button" onClick={() => void handleCommentDelete(comment.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
               </div>
             ) : null}
           </article>
         ))}
         <form onSubmit={handleCommentSubmit} style={{ display: "grid", gap: 12 }}>
-          <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} placeholder={viewerIsAdmin ? "Add an admin comment" : "Add a customer comment"} rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem", resize: "vertical" }} />
-          <button type="submit" style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Add comment</button>
+          <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} placeholder={viewerIsAdmin ? "Add an admin comment" : "Add a customer comment"} rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem", resize: "vertical" }} />
+          <button type="submit" style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Add comment</button>
         </form>
       </section> : null}
 

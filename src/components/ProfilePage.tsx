@@ -1,14 +1,13 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-
-import { authApi, Category, categoryApi, GalleryDraft, galleryApi, GalleryItem, orderApi, OrderSummary, User } from "../api";
+import { Category, categoryApi, GalleryDraft, galleryApi, GalleryItem, orderApi, OrderSummary, User } from "../api";
 
 
 type ProfilePageProps = {
   token: string;
   user: User;
-  onUserChange: (user: User) => void;
   onGalleryChanged: () => void;
   onOpenOrder: (orderNumber: string) => void;
+  onLogout: () => void;
 };
 
 
@@ -29,11 +28,7 @@ function getGalleryColumns() {
 }
 
 
-export default function ProfilePage({ token, user, onUserChange, onGalleryChanged, onOpenOrder }: ProfilePageProps) {
-  const [name, setName] = useState(user.name);
-  const [profileMessage, setProfileMessage] = useState("");
-  const [profileError, setProfileError] = useState("");
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
+export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder, onLogout }: ProfilePageProps) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [galleryError, setGalleryError] = useState("");
   const [galleryMessage, setGalleryMessage] = useState("");
@@ -57,10 +52,6 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   const [isLoadingOrders, setIsLoadingOrders] = useState(user.role === "admin");
   const [ordersError, setOrdersError] = useState("");
   const [galleryColumns, setGalleryColumns] = useState(getGalleryColumns);
-
-  useEffect(() => {
-    setName(user.name);
-  }, [user.name]);
 
   useEffect(() => {
     const handleResize = () => setGalleryColumns(getGalleryColumns());
@@ -125,22 +116,6 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   }, [ordersPage, token, user.role]);
 
   const isEditing = editingId !== null;
-
-  const handleProfileSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    try {
-      setIsSavingProfile(true);
-      setProfileMessage("");
-      setProfileError("");
-      const nextUser = await authApi.updateProfile(token, name);
-      onUserChange(nextUser);
-      setProfileMessage("Profile saved.");
-    } catch (nextError) {
-      setProfileError(nextError instanceof Error ? nextError.message : "Unable to save profile.");
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
 
   const resetDraft = () => {
     setDraft(emptyDraft);
@@ -289,33 +264,28 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   return (
     <section style={{ display: "grid", gap: 16 }}>
       <div style={{ display: "grid", gap: 8, maxWidth: 680 }}>
-        <p style={{ margin: 0, color: "var(--leaf-700)", fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase" }}>Profile</p>
-        <h2 style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontSize: "clamp(1.6rem, 4vw, 2.2rem)", fontWeight: 500 }}>{user.name}</h2>
+        <h3 style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontSize: "clamp(1.6rem, 4vw, 2.2rem)", fontWeight: 500 }}>Profile</h3>
       </div>
-      <form onSubmit={handleProfileSubmit} style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-        <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Name" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
-        <input value={user.email} readOnly style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "var(--linen)", color: "var(--muted)", fontSize: "1rem" }} />
+      <div style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+        <p style={{ margin: 0, color: "var(--muted)" }}>Name: {user.name}</p>
+        <p style={{ margin: 0, color: "var(--muted)" }}>Email: {user.email}</p>
         <p style={{ margin: 0, color: "var(--muted)" }}>Role: {user.role}</p>
-        {profileError ? <p style={{ margin: 0, color: "var(--danger)" }}>{profileError}</p> : null}
-        {profileMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{profileMessage}</p> : null}
-        <button type="submit" disabled={isSavingProfile} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{isSavingProfile ? "Saving..." : "Save profile"}</button>
-      </form>
+      </div>
 
       {user.role === "admin" ? (
         <>
           <section style={{ display: "grid", gap: 12 }}>
             <div>
-              <p style={{ margin: 0, color: "var(--leaf-700)", fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase" }}>Admin Tools</p>
-              <h3 style={{ margin: 0, color: "var(--leaf-800)", fontFamily: "var(--serif)", fontSize: "clamp(1.35rem, 3vw, 1.8rem)", fontWeight: 500 }}>Manage gallery, categories, and orders.</h3>
+              <h3 style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontSize: "clamp(1.35rem, 3vw, 1.8rem)", fontWeight: 500 }}>Admin Tools</h3>
             </div>
 
-            <details open={isEditing} style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-              <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>{isEditing ? "Edit Gallery Item" : "Create Gallery Item"}</summary>
+            <details open={isEditing} style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+              <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>{isEditing ? "Edit Gallery Item" : "Create Gallery Item"}</summary>
               <div style={{ display: "grid", gap: 12, padding: 16, borderTop: "1px solid var(--line)" }}>
                 <form onSubmit={handleGallerySubmit} style={{ display: "grid", gap: 12 }}>
-                  <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
-                  <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem", resize: "vertical" }} />
-                  <input value={draft.price} onChange={(event) => setDraft((current) => ({ ...current, price: event.target.value }))} placeholder="Optional price in dollars" inputMode="decimal" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
+                  <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }} />
+                  <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem", resize: "vertical" }} />
+                  <input value={draft.price} onChange={(event) => setDraft((current) => ({ ...current, price: event.target.value }))} placeholder="Optional price in dollars" inputMode="decimal" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }} />
                   <label style={{ display: "grid", gap: 8, color: "var(--muted)" }}>
                     <span>{isEditing ? "Replace artwork image" : "Artwork image"}</span>
                     <input type="file" accept="image/*" onChange={handleUpload} />
@@ -324,22 +294,22 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                   {galleryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{galleryError}</p> : null}
                   {galleryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{galleryMessage}</p> : null}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                    <button type="submit" disabled={isSavingGallery} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)", opacity: isSavingGallery ? 0.7 : 1 }}>{isSavingGallery ? "Saving..." : isEditing ? "Update item" : "Create item"}</button>
-                    {isEditing ? <button type="button" onClick={resetDraft} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Cancel edit</button> : null}
+                    <button type="submit" disabled={isSavingGallery} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)", opacity: isSavingGallery ? 0.7 : 1 }}>{isSavingGallery ? "Saving..." : isEditing ? "Update item" : "Create item"}</button>
+                    {isEditing ? <button type="button" onClick={resetDraft} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel edit</button> : null}
                   </div>
                 </form>
               </div>
             </details>
 
-            <details open style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-              <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Edit Gallery</summary>
+            <details style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+              <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Edit Gallery</summary>
               <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid var(--line)" }}>
                 {isLoadingItems ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading admin gallery...</p> : null}
                 {!isLoadingItems ? (
                   <div style={{ display: "grid", gap: 12 }}>
                     <div style={{ display: "grid", gap: 12, gridTemplateColumns: editGalleryGridColumns }}>
                       {items.map((item) => (
-                        <article key={item.id} draggable onDragStart={() => setDraggingId(item.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(item.id)} style={{ position: "relative", display: "grid", gap: 10, minHeight: 148, padding: 14, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+                        <article key={item.id} draggable onDragStart={() => setDraggingId(item.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(item.id)} style={{ position: "relative", display: "grid", gap: 10, minHeight: 148, padding: 14, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
                           <span style={{ position: "absolute", top: 12, right: 12, color: "var(--leaf-700)", fontSize: "1rem", fontWeight: 700, letterSpacing: 1, cursor: "grab" }} aria-hidden="true">⋮⋮</span>
                           <div style={{ display: "grid", gap: 6, paddingRight: 24 }}>
                             <p style={{ margin: 0, fontWeight: 700 }}>{item.title}</p>
@@ -359,32 +329,32 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                         </article>
                       ))}
                     </div>
-                    {items.length > 1 ? <button type="button" onClick={() => void saveOrder()} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Save gallery order</button> : null}
+                    {items.length > 1 ? <button type="button" onClick={() => void saveOrder()} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Save gallery order</button> : null}
                   </div>
                 ) : null}
               </div>
             </details>
 
-            <details open style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-              <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>Categories</summary>
+            <details style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+              <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Categories</summary>
               <div style={{ display: "grid", gap: 12, padding: 16, borderTop: "1px solid var(--line)" }}>
                 <form onSubmit={handleCategorySubmit} style={{ display: "grid", gap: 12 }}>
-                  <input value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="Category name" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
+                  <input value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="Category name" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }} />
                   {categoryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{categoryError}</p> : null}
                   {categoryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{categoryMessage}</p> : null}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                    <button type="submit" style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{editingCategoryId !== null ? "Update category" : "Create category"}</button>
-                    {editingCategoryId !== null ? <button type="button" onClick={() => { setEditingCategoryId(null); setCategoryName(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Cancel edit</button> : null}
+                    <button type="submit" style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{editingCategoryId !== null ? "Update category" : "Create category"}</button>
+                    {editingCategoryId !== null ? <button type="button" onClick={() => { setEditingCategoryId(null); setCategoryName(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel edit</button> : null}
                   </div>
                 </form>
                 <div style={{ display: "grid", gap: 12 }}>
                   {categories.map((category) => (
-                    <div key={category.id} style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+                    <div key={category.id} style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
                       <p style={{ margin: 0, fontWeight: 700 }}>{category.name}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>{category.isArchived ? "Archived" : "Active"}</p>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                        <button type="button" onClick={() => { setEditingCategoryId(category.id); setCategoryName(category.name); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
-                        <button type="button" onClick={() => void toggleArchiveCategory(category)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>{category.isArchived ? "Restore" : "Archive"}</button>
+                        <button type="button" onClick={() => { setEditingCategoryId(category.id); setCategoryName(category.name); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Edit</button>
+                        <button type="button" onClick={() => void toggleArchiveCategory(category)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>{category.isArchived ? "Restore" : "Archive"}</button>
                       </div>
                     </div>
                   ))}
@@ -393,33 +363,35 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
             </details>
           </section>
 
-          <details open style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-            <summary style={{ padding: 16, cursor: "pointer", color: "var(--leaf-800)", fontFamily: "var(--serif)", fontWeight: 700 }}>All Orders</summary>
+          <details style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+            <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>All Orders</summary>
             <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid var(--line)" }}>
               {ordersError ? <p style={{ margin: 0, color: "var(--danger)" }}>{ordersError}</p> : null}
               {isLoadingOrders ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading orders...</p> : null}
               {!isLoadingOrders ? (
                 <div style={{ display: "grid", gap: 12 }}>
                   {orders.map((order) => (
-                    <article key={order.orderNumber} style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.86)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+                    <article key={order.orderNumber} style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
                       <p style={{ margin: 0, fontWeight: 700 }}>Order {order.orderNumber}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>{order.customerName} · {order.categoryName}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>Status: {order.status}</p>
                       {order.amountCents !== null ? <p style={{ margin: 0, color: "var(--muted)" }}>Amount: {(order.amountCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}</p> : null}
-                      {order.canOpen ? <button type="button" onClick={() => onOpenOrder(order.orderNumber)} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800 }}>Open order</button> : null}
+                      {order.canOpen ? <button type="button" onClick={() => onOpenOrder(order.orderNumber)} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>Open order</button> : null}
                     </article>
                   ))}
                 </div>
               ) : null}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                <button type="button" disabled={ordersPage === 1} onClick={() => setOrdersPage((current) => current - 1)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Previous</button>
+                <button type="button" disabled={ordersPage === 1} onClick={() => setOrdersPage((current) => current - 1)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Previous</button>
                 <p style={{ margin: 0, color: "var(--muted)" }}>Page {ordersPage} of {totalPages}</p>
-                <button type="button" disabled={ordersPage >= totalPages} onClick={() => setOrdersPage((current) => current + 1)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Next</button>
+                <button type="button" disabled={ordersPage >= totalPages} onClick={() => setOrdersPage((current) => current + 1)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Next</button>
               </div>
             </div>
           </details>
         </>
       ) : null}
+
+      <button type="button" onClick={onLogout} style={{ justifySelf: "start", border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "12px 14px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Logout</button>
     </section>
   );
 }
