@@ -19,6 +19,7 @@ export type GalleryItem = {
   imageUrl: string;
   sourceImageUrl: string;
   s3Key: string | null;
+  priceCents: number | null;
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -29,6 +30,7 @@ export type GalleryDraft = {
   description: string;
   imageUrl: string;
   s3Key: string;
+  price: string;
 };
 
 export type Category = {
@@ -79,10 +81,12 @@ export type Order = {
 
 export type OrderSummary = {
   orderNumber: string;
+  orderKind: string;
   customerName: string;
   categoryName: string;
   status: string;
-  quoteAmountCents: number | null;
+  amountCents: number | null;
+  canOpen: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -143,6 +147,7 @@ export const galleryApi = {
     const formData = new FormData();
     formData.append("title", payload.title);
     formData.append("description", payload.description);
+    formData.append("price_amount", payload.price);
     formData.append("existing_image_url", payload.imageUrl);
     formData.append("existing_s3_key", payload.s3Key);
     if (file) {
@@ -154,6 +159,7 @@ export const galleryApi = {
     const formData = new FormData();
     formData.append("title", payload.title);
     formData.append("description", payload.description);
+    formData.append("price_amount", payload.price);
     formData.append("existing_image_url", payload.imageUrl);
     formData.append("existing_s3_key", payload.s3Key);
     if (file) {
@@ -163,6 +169,7 @@ export const galleryApi = {
   },
   remove: (token: string, itemId: number) => request<{ status: string }>(`/admin/gallery/${itemId}`, { method: "DELETE" }, token),
   reorder: (token: string, orderedIds: number[]) => request<{ status: string }>("/admin/gallery/reorder", { method: "POST", body: JSON.stringify({ orderedIds }) }, token),
+  createCheckout: (itemId: number) => request<{ url: string }>(`/gallery/${itemId}/checkout`, { method: "POST" }),
 };
 
 export const categoryApi = {

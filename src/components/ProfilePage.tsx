@@ -12,7 +12,7 @@ type ProfilePageProps = {
 };
 
 
-const emptyDraft: GalleryDraft = { title: "", description: "", imageUrl: "", s3Key: "" };
+const emptyDraft: GalleryDraft = { title: "", description: "", imageUrl: "", s3Key: "", price: "" };
 
 
 function getGalleryColumns() {
@@ -309,6 +309,7 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                 <form onSubmit={handleGallerySubmit} style={{ display: "grid", gap: 12 }}>
                   <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
                   <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem", resize: "vertical" }} />
+                  <input value={draft.price} onChange={(event) => setDraft((current) => ({ ...current, price: event.target.value }))} placeholder="Optional price in dollars" inputMode="decimal" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
                   <label style={{ display: "grid", gap: 8, color: "var(--muted)" }}>
                     <span>{isEditing ? "Replace artwork image" : "Artwork image"}</span>
                     <input type="file" accept="image/*" onChange={handleUpload} />
@@ -339,7 +340,7 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                             <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>Drag to reorder</p>
                           </div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
-                            <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "" }); setSelectedImageFile(null); setPreviewUrl(item.imageUrl); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                            <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "", price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImageFile(null); setPreviewUrl(item.imageUrl); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
                             <button type="button" onClick={() => void handleDelete(item.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
                           </div>
                         </article>
@@ -391,7 +392,8 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                       <p style={{ margin: 0, fontWeight: 700 }}>Order {order.orderNumber}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>{order.customerName} · {order.categoryName}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>Status: {order.status}</p>
-                      <button type="button" onClick={() => onOpenOrder(order.orderNumber)} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800 }}>Open order</button>
+                      {order.amountCents !== null ? <p style={{ margin: 0, color: "var(--muted)" }}>Amount: {(order.amountCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}</p> : null}
+                      {order.canOpen ? <button type="button" onClick={() => onOpenOrder(order.orderNumber)} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800 }}>Open order</button> : null}
                     </article>
                   ))}
                 </div>
