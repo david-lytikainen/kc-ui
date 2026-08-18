@@ -140,15 +140,30 @@ export const authApi = {
 export const galleryApi = {
   listPublic: () => request<GalleryItem[]>("/gallery"),
   listAdmin: (token: string) => request<GalleryItem[]>("/admin/gallery", { method: "GET" }, token),
-  create: (token: string, payload: GalleryDraft) => request<GalleryItem>("/admin/gallery", { method: "POST", body: JSON.stringify(payload) }, token),
-  update: (token: string, itemId: number, payload: GalleryDraft) => request<GalleryItem>(`/admin/gallery/${itemId}`, { method: "PATCH", body: JSON.stringify(payload) }, token),
+  create: (token: string, payload: GalleryDraft, file?: File | null) => {
+    const formData = new FormData();
+    formData.append("title", payload.title);
+    formData.append("description", payload.description);
+    formData.append("existing_image_url", payload.imageUrl);
+    formData.append("existing_s3_key", payload.s3Key);
+    if (file) {
+      formData.append("file", file);
+    }
+    return request<GalleryItem>("/admin/gallery", { method: "POST", body: formData }, token);
+  },
+  update: (token: string, itemId: number, payload: GalleryDraft, file?: File | null) => {
+    const formData = new FormData();
+    formData.append("title", payload.title);
+    formData.append("description", payload.description);
+    formData.append("existing_image_url", payload.imageUrl);
+    formData.append("existing_s3_key", payload.s3Key);
+    if (file) {
+      formData.append("file", file);
+    }
+    return request<GalleryItem>(`/admin/gallery/${itemId}`, { method: "PATCH", body: formData }, token);
+  },
   remove: (token: string, itemId: number) => request<{ status: string }>(`/admin/gallery/${itemId}`, { method: "DELETE" }, token),
   reorder: (token: string, orderedIds: number[]) => request<{ status: string }>("/admin/gallery/reorder", { method: "POST", body: JSON.stringify({ orderedIds }) }, token),
-  upload: (token: string, file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    return request<{ s3Key: string; previewUrl: string }>("/admin/gallery/upload", { method: "POST", body: formData }, token);
-  },
 };
 
 export const categoryApi = {

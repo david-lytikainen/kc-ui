@@ -41,8 +41,9 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   const [draft, setDraft] = useState<GalleryDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState("");
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [isSavingGallery, setIsSavingGallery] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryName, setCategoryName] = useState("");
   const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
@@ -65,6 +66,14 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   useEffect(() => {
     if (user.role !== "admin") {
@@ -134,32 +143,28 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   const resetDraft = () => {
     setDraft(emptyDraft);
     setEditingId(null);
-    setUploadedPreviewUrl("");
+    setSelectedImageFile(null);
+    setPreviewUrl("");
   };
 
   const reloadCategories = async () => {
     setCategories(await categoryApi.listAdmin(token));
   };
 
-  const handleUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    try {
-      setIsUploading(true);
-      setGalleryError("");
-      const uploaded = await galleryApi.upload(token, file);
-      setDraft((current) => ({ ...current, imageUrl: uploaded.previewUrl, s3Key: uploaded.s3Key }));
-      setUploadedPreviewUrl(uploaded.previewUrl);
-      setGalleryMessage("Image uploaded.");
-    } catch (nextError) {
-      setGalleryError(nextError instanceof Error ? nextError.message : "Upload failed.");
-    } finally {
-      setIsUploading(false);
-      event.target.value = "";
+    if (previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
     }
+    setGalleryError("");
+    setGalleryMessage("Image ready to save.");
+    setSelectedImageFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    event.target.value = "";
   };
 
   const refreshAdminItems = async () => {
@@ -171,21 +176,24 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   const handleGallerySubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
+      setIsSavingGallery(true);
       setGalleryError("");
       setGalleryMessage("");
-      if (!draft.imageUrl && !draft.s3Key) {
-        throw new Error("Upload an image before saving this gallery item.");
+      if (!selectedImageFile && !draft.s3Key && !draft.imageUrl) {
+        throw new Error("Choose an image before saving this gallery item.");
       }
       if (isEditing && editingId !== null) {
-        await galleryApi.update(token, editingId, draft);
+        await galleryApi.update(token, editingId, draft, selectedImageFile);
       } else {
-        await galleryApi.create(token, draft);
+        await galleryApi.create(token, draft, selectedImageFile);
       }
       await refreshAdminItems();
       resetDraft();
       setGalleryMessage(isEditing ? "Gallery item updated." : "Gallery item created.");
     } catch (nextError) {
       setGalleryError(nextError instanceof Error ? nextError.message : "Unable to save gallery item.");
+    } finally {
+      setIsSavingGallery(false);
     }
   };
 
@@ -301,17 +309,15 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                 <form onSubmit={handleGallerySubmit} style={{ display: "grid", gap: 12 }}>
                   <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
                   <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem", resize: "vertical" }} />
-                  <input value={draft.imageUrl} onChange={(event) => setDraft((current) => ({ ...current, imageUrl: event.target.value }))} placeholder="Signed or fallback image URL" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
-                  <input value={draft.s3Key} onChange={(event) => setDraft((current) => ({ ...current, s3Key: event.target.value }))} placeholder="S3 key" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--ink)", fontSize: "1rem" }} />
                   <label style={{ display: "grid", gap: 8, color: "var(--muted)" }}>
-                    <span>Artwork image</span>
+                    <span>{isEditing ? "Replace artwork image" : "Artwork image"}</span>
                     <input type="file" accept="image/*" onChange={handleUpload} />
                   </label>
-                  {uploadedPreviewUrl ? <img src={uploadedPreviewUrl} alt="Uploaded preview" style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} /> : null}
+                  {previewUrl ? <img src={previewUrl} alt="Selected preview" style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} /> : null}
                   {galleryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{galleryError}</p> : null}
                   {galleryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{galleryMessage}</p> : null}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                    <button type="submit" disabled={isUploading} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)", opacity: isUploading ? 0.7 : 1 }}>{isEditing ? "Update item" : "Create item"}</button>
+                    <button type="submit" disabled={isSavingGallery} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--paper)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)", opacity: isSavingGallery ? 0.7 : 1 }}>{isSavingGallery ? "Saving..." : isEditing ? "Update item" : "Create item"}</button>
                     {isEditing ? <button type="button" onClick={resetDraft} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Cancel edit</button> : null}
                   </div>
                 </form>
@@ -333,7 +339,7 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                             <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>Drag to reorder</p>
                           </div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
-                            <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "" }); setUploadedPreviewUrl(item.imageUrl); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                            <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "" }); setSelectedImageFile(null); setPreviewUrl(item.imageUrl); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
                             <button type="button" onClick={() => void handleDelete(item.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
                           </div>
                         </article>
