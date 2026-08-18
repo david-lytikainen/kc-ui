@@ -55,7 +55,6 @@ export type OrderComment = {
   emailSentAt: string | null;
   createdAt: string;
   updatedAt: string;
-  canSendEmail: boolean;
 };
 
 export type Order = {
@@ -193,7 +192,6 @@ export const orderApi = {
   createComment: (orderNumber: string, body: string, token?: string) => request<OrderComment>(`/orders/${orderNumber}/comments`, { method: "POST", body: JSON.stringify({ body }) }, token),
   updateComment: (orderNumber: string, commentId: number, body: string, token?: string) => request<OrderComment>(`/orders/${orderNumber}/comments/${commentId}`, { method: "PATCH", body: JSON.stringify({ body }) }, token),
   deleteComment: (orderNumber: string, commentId: number, token?: string) => request<{ status: string }>(`/orders/${orderNumber}/comments/${commentId}`, { method: "DELETE" }, token),
-  sendCommentEmail: (orderNumber: string, commentId: number, token?: string) => request<OrderComment>(`/orders/${orderNumber}/comments/${commentId}/send-email`, { method: "POST" }, token),
   decline: (orderNumber: string) => request<Order>(`/orders/${orderNumber}/decline`, { method: "POST" }),
   createCheckout: (orderNumber: string) => request<{ url: string }>(`/orders/${orderNumber}/checkout`, { method: "POST" }),
   confirmCheckout: (orderNumber: string, checkoutSessionId: string) => request<Order>(`/orders/${orderNumber}/confirm-payment`, { method: "POST", body: JSON.stringify({ checkoutSessionId }) }),

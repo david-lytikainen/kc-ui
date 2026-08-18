@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 
-import { Order, OrderComment, orderApi } from "../api";
+import { Order, orderApi } from "../api";
 
 
 type OrderPageProps = {
@@ -127,17 +127,6 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     }
   };
 
-  const handleCommentEmail = async (comment: OrderComment) => {
-    try {
-      clearFeedback();
-      await orderApi.sendCommentEmail(orderNumber, comment.id, authToken);
-      await reloadOrder();
-      setMessage("Email sent.");
-    } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Unable to send email.");
-    }
-  };
-
   const handleDecline = async () => {
     try {
       clearFeedback();
@@ -257,9 +246,6 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
                 <button type="button" onClick={() => { setEditingCommentId(comment.id); setEditingBody(comment.body); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
                 <button type="button" onClick={() => void handleCommentDelete(comment.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
               </div>
-            ) : null}
-            {comment.canSendEmail && comment.authorRole === ownRole ? (
-              <button type="button" disabled={Boolean(comment.emailSentAt)} onClick={() => void handleCommentEmail(comment)} style={{ justifySelf: "start", border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Email {viewerIsAdmin ? "customer" : "admin"}</button>
             ) : null}
           </article>
         ))}
