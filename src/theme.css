@@ -1,0 +1,101 @@
+:root {
+  --font-root: Inter, ui-sans-serif, system-ui, -apple-system;
+  --bg-navbar: #72825E;
+  --bg-page: #f7f1e7;
+  --bg-gallery-item: #fffdf8;
+  --bg-panel: #fffdf8;
+  --text-light: #fffdf8;
+  --text-dark: #233129;
+  --scroll-target-offset: 112px;
+
+  --leaf-900: #1f3328;
+  --leaf-800: #2d4435;
+  --leaf-700: #3f5f48;
+  --leaf-200: #c9d5c2;
+  --cream: var(--bg-page);
+  --cream-soft: #f4f0e5;
+  --paper: var(--text-light);
+  --linen: #efe5d5;
+  --mist: #edf2e8;
+  --ink: var(--text-dark);
+  --muted: #687366;
+  --placeholder: #7e887b;
+  --hero-soft: #e2eadc;
+  --danger: #8b342d;
+  --success: #436f46;
+  --line: rgba(63, 95, 72, 0.22);
+  --shadow: 0 18px 44px rgba(31, 51, 40, 0.13);
+  --serif: Georgia, "Times New Roman", Times, serif;
+  --script: "Snell Roundhand", "Segoe Script", "Bradley Hand", cursive;
+  font-family: var(--font-root);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg-page);
+  font-family: var(--font-root);
+  scroll-padding-top: var(--scroll-target-offset);
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: inherit;
+  background:
+    radial-gradient(circle at top left, rgba(201, 213, 194, 0.45), transparent 34rem),
+    linear-gradient(180deg, var(--cream-soft) 0%, var(--bg-page) 42%, var(--mist) 100%);
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  opacity: 0.52;
+  background-image:
+    linear-gradient(120deg, transparent 0 42%, rgba(63, 95, 72, 0.08) 42% 43%, transparent 43%),
+    radial-gradient(ellipse at 90% 10%, rgba(85, 116, 91, 0.24), transparent 24rem),
+    radial-gradient(ellipse at 10% 90%, rgba(184, 115, 79, 0.12), transparent 24rem);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  letter-spacing: 0;
+}
+
+button {
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.62;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 3px solid rgba(85, 116, 91, 0.28);
+  outline-offset: 3px;
+}
+
+a {
+  color: var(--text-dark);
+  text-decoration-color: rgba(85, 116, 91, 0.35);
+  text-underline-offset: 3px;
+}
