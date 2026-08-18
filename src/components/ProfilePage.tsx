@@ -41,6 +41,8 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   const [draft, setDraft] = useState<GalleryDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [isSavingGallery, setIsSavingGallery] = useState(false);
@@ -170,6 +172,7 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
   const refreshAdminItems = async () => {
     const nextItems = await galleryApi.listAdmin(token);
     setItems(nextItems);
+    setPendingDeleteId(null);
     onGalleryChanged();
   };
 
@@ -199,6 +202,7 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
 
   const handleDelete = async (itemId: number) => {
     try {
+      setDeletingId(itemId);
       setGalleryError("");
       setGalleryMessage("");
       await galleryApi.remove(token, itemId);
@@ -209,6 +213,8 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
       setGalleryMessage("Gallery item deleted.");
     } catch (nextError) {
       setGalleryError(nextError instanceof Error ? nextError.message : "Unable to delete gallery item.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -341,7 +347,14 @@ export default function ProfilePage({ token, user, onUserChange, onGalleryChange
                           </div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
                             <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "", price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImageFile(null); setPreviewUrl(item.imageUrl); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
-                            <button type="button" onClick={() => void handleDelete(item.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
+                            {pendingDeleteId === item.id ? (
+                              <>
+                                <button type="button" onClick={() => void handleDelete(item.id)} disabled={deletingId === item.id} style={{ border: "1px solid var(--danger)", borderRadius: 8, padding: "10px 12px", background: "var(--danger)", color: "var(--paper)", fontWeight: 800, opacity: deletingId === item.id ? 0.7 : 1 }}>{deletingId === item.id ? "Deleting..." : "Confirm delete"}</button>
+                                <button type="button" onClick={() => setPendingDeleteId(null)} disabled={deletingId === item.id} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Cancel</button>
+                              </>
+                            ) : (
+                              <button type="button" onClick={() => setPendingDeleteId(item.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
+                            )}
                           </div>
                         </article>
                       ))}
