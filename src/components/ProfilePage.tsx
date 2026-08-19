@@ -302,7 +302,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
             </details>
 
             <details style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-              <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Edit Gallery</summary>
+              <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Existing Gallery</summary>
               <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid var(--line)" }}>
                 {isLoadingItems ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading admin gallery...</p> : null}
                 {!isLoadingItems ? (

@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { authApi, User } from "./api";
 import AuthPanel from "./components/AuthPanel";
 import CommissionRequestForm from "./components/CommissionRequestForm";
+import GalleryPage from "./components/GalleryPage";
 import GalleryPreview from "./components/GalleryPreview";
 import Navigation from "./components/Navigation";
 import OrderPage from "./components/OrderPage";
 import ProfilePage from "./components/ProfilePage";
 
 
-type AppView = "home" | "login" | "profile" | "order";
+type AppView = "home" | "gallery" | "login" | "profile" | "order";
 
 
 function parseRoute(): { view: AppView; orderNumber: string } {
@@ -19,6 +20,10 @@ function parseRoute(): { view: AppView; orderNumber: string } {
 
   if (window.location.pathname === "/admin/profile") {
     return { view: "profile", orderNumber: "" };
+  }
+
+  if (window.location.pathname === "/gallery") {
+    return { view: "gallery", orderNumber: "" };
   }
 
   const match = window.location.pathname.match(/^\/order\/(\d{6})\/?$/);
@@ -41,6 +46,7 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [galleryRefreshToken, setGalleryRefreshToken] = useState(0);
   const [pendingScroll, setPendingScroll] = useState<"gallery" | "commission" | null>(null);
+  const [isGalleryReady, setIsGalleryReady] = useState(false);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -88,15 +94,23 @@ export default function App() {
       return;
     }
 
+    if (pendingScroll === "commission" && !isGalleryReady) {
+      return;
+    }
+
     const target = pendingScroll === "gallery" ? galleryRef.current : commissionRef.current;
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
     setPendingScroll(null);
-  }, [pendingScroll, view]);
+  }, [isGalleryReady, pendingScroll, view]);
 
   const showHome = (section: "gallery" | "commission" | null = null) => {
+    const isReturningHome = view !== "home";
     window.history.pushState({}, "", "/");
     setView("home");
     setOrderNumber("");
+    if (section === "commission" && isReturningHome) {
+      setIsGalleryReady(false);
+    }
     setPendingScroll(section);
   };
 
@@ -104,6 +118,13 @@ export default function App() {
     window.history.pushState({}, "", "/admin/profile");
     setView("profile");
     setOrderNumber("");
+  };
+
+  const showFullGallery = () => {
+    window.history.pushState({}, "", "/gallery");
+    setView("gallery");
+    setOrderNumber("");
+    setPendingScroll(null);
   };
 
   const openOrder = (nextOrderNumber: string) => {
@@ -126,11 +147,15 @@ export default function App() {
     showHome();
   };
 
+  const handleGalleryReady = useCallback(() => {
+    setIsGalleryReady(true);
+  }, []);
+
   return (
     <div style={{ minHeight: "100vh" }}>
       <Navigation
         isAuthenticated={Boolean(user)}
-        onGalleryClick={() => showHome("gallery")}
+        onGalleryClick={showFullGallery}
         onCommissionClick={() => showHome("commission")}
         onHomeClick={showHome}
         onProfileClick={showProfile}
@@ -144,18 +169,19 @@ export default function App() {
                 <h1 style={{ margin: 0, fontFamily: "var(--serif)", fontSize: "clamp(3.4rem, 11vw, 7.4rem)", lineHeight: 0.88, fontWeight: 500 }}>Kyra&apos;s Creations</h1>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
                   <button type="button" onClick={() => showHome("commission")} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Request a commission</button>
-                  <button type="button" onClick={() => showHome("gallery")} style={{ border: "1px solid rgba(255, 253, 248, 0.42)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.14)", color: "var(--text-light)", fontWeight: 800, backdropFilter: "blur(8px)" }}>View gallery</button>
+                  <button type="button" onClick={() => showFullGallery()} style={{ border: "1px solid rgba(255, 253, 248, 0.42)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.14)", color: "var(--text-light)", fontWeight: 800, backdropFilter: "blur(8px)" }}>View gallery</button>
                 </div>
               </div>
             </section>
             <div ref={galleryRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
-              <GalleryPreview refreshToken={galleryRefreshToken} />
+              <GalleryPreview refreshToken={galleryRefreshToken} onReady={handleGalleryReady} onOpenFullGallery={showFullGallery} />
             </div>
             <div ref={commissionRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
               <CommissionRequestForm onOrderCreated={(nextOrderNumber) => openOrder(nextOrderNumber)} />
             </div>
           </>
         ) : null}
+        {view === "gallery" ? <GalleryPage /> : null}
         {view === "login" || (view === "profile" && (!user || !token)) ? <AuthPanel onAuthed={handleAuthed} /> : null}
         {view === "profile" && user && token ? <ProfilePage token={token} user={user} onGalleryChanged={() => setGalleryRefreshToken((current) => current + 1)} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} onLogout={handleLogout} /> : null}
         {view === "order" && orderNumber ? <OrderPage orderNumber={orderNumber} token={token} onBackHome={showHome} /> : null}
