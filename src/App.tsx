@@ -174,7 +174,7 @@ export default function App() {
               </div>
             </section>
             <div ref={galleryRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
-              <GalleryPreview refreshToken={galleryRefreshToken} onReady={handleGalleryReady} onOpenFullGallery={showFullGallery} />
+              <GalleryPreview refreshToken={galleryRefreshToken} onReady={handleGalleryReady} onOpenFullGallery={showFullGallery} onOpenOrder={openOrder} />
             </div>
             <div ref={commissionRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
               <CommissionRequestForm onOrderCreated={(nextOrderNumber) => openOrder(nextOrderNumber)} />
