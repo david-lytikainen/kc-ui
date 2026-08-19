@@ -6,18 +6,35 @@ import { galleryApi, GalleryItem } from "../api";
 type GalleryPreviewProps = {
   refreshToken: number;
   onOpenOrder: (orderNumber: string) => void;
+  onReady?: () => void;
+  onOpenFullGallery: () => void;
 };
 
 
-export default function GalleryPreview({ refreshToken, onOpenOrder }: GalleryPreviewProps) {
+function getItemsPerSlide() {
+  if (typeof window === "undefined") {
+    return 3;
+  }
+  return window.innerWidth >= 768 ? 3 : 1;
+}
+
+
+export default function GalleryPreview({ refreshToken, onReady, onOpenFullGallery, onOpenOrder }: GalleryPreviewProps) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [inquiryItemId, setInquiryItemId] = useState<number | null>(null);
   const [inquiryBody, setInquiryBody] = useState("");
   const [isSendingInquiry, setIsSendingInquiry] = useState(false);
 
   const formatCurrency = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+  const slideCount = Math.max(1, Math.ceil(items.length / itemsPerSlide));
+  const visibleItems = items.length
+    ? Array.from({ length: Math.min(itemsPerSlide, items.length) }, (_, index) => items[(currentSlide * itemsPerSlide + index) % items.length])
+    : [];
+  const galleryColumns = `repeat(${Math.min(itemsPerSlide, Math.max(visibleItems.length, 1))}, minmax(0, 1fr))`;
 
   const handleBuy = async (itemId: number) => {
     try {
@@ -54,6 +71,7 @@ export default function GalleryPreview({ refreshToken, onOpenOrder }: GalleryPre
         const nextItems = await galleryApi.listPublic();
         if (isActive) {
           setItems(nextItems);
+          setCurrentSlide(0);
         }
       } catch (nextError) {
         if (isActive) {
@@ -62,6 +80,7 @@ export default function GalleryPreview({ refreshToken, onOpenOrder }: GalleryPre
       } finally {
         if (isActive) {
           setIsLoading(false);
+          onReady?.();
         }
       }
     }
@@ -70,7 +89,30 @@ export default function GalleryPreview({ refreshToken, onOpenOrder }: GalleryPre
     return () => {
       isActive = false;
     };
-  }, [refreshToken]);
+  }, [onReady, refreshToken]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerSlide(getItemsPerSlide());
+      setCurrentSlide(0);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (items.length <= itemsPerSlide) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setCurrentSlide((current) => (current + 1) % slideCount);
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [items.length, itemsPerSlide, slideCount]);
 
   return (
     <section id="gallery" style={{ display: "grid", gap: 16 }}>
@@ -81,8 +123,9 @@ export default function GalleryPreview({ refreshToken, onOpenOrder }: GalleryPre
       {error ? <p style={{ margin: 0, color: "var(--danger)" }}>{error}</p> : null}
       {!isLoading && !error && items.length === 0 ? <p style={{ margin: 0, color: "var(--muted)" }}>No gallery items are published yet.</p> : null}
       {!isLoading && !error && items.length > 0 ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 12 }}>
-          {items.map((item) => (
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: galleryColumns, gap: 12 }}>
+          {visibleItems.map((item) => (
             <article key={item.id} style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-gallery-item)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
               <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "var(--linen)" }} />
               <div style={{ display: "grid", gap: 10, padding: 16 }}>
@@ -109,6 +152,8 @@ export default function GalleryPreview({ refreshToken, onOpenOrder }: GalleryPre
               </div>
             </article>
           ))}
+          </div>
+          <button type="button" onClick={onOpenFullGallery} style={{ justifySelf: "start", border: 0, background: "transparent", color: "var(--text-dark)", padding: 0, marginBottom: 16, fontWeight: 800, textDecoration: "underline", textDecorationColor: "rgba(85, 116, 91, 0.35)", textUnderlineOffset: 4 }}>View Full Gallery</button>
         </div>
       ) : null}
     </section>
