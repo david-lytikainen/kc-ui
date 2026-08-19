@@ -65,6 +65,7 @@ export type Order = {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  galleryItemId: number | null;
   categoryName: string;
   categoryId: number | null;
   customCategoryName: string | null;
@@ -179,6 +180,7 @@ export const galleryApi = {
   remove: (token: string, itemId: number) => request<{ status: string }>(`/admin/gallery/${itemId}`, { method: "DELETE" }, token),
   reorder: (token: string, orderedIds: number[]) => request<{ status: string }>("/admin/gallery/reorder", { method: "POST", body: JSON.stringify({ orderedIds }) }, token),
   createCheckout: (itemId: number) => request<{ url: string }>(`/gallery/${itemId}/checkout`, { method: "POST" }),
+  createInquiry: (itemId: number, body: string) => request<Order>(`/gallery/${itemId}/inquiries`, { method: "POST", body: JSON.stringify({ body }) }),
 };
 
 export const categoryApi = {
@@ -210,6 +212,7 @@ export const orderApi = {
   deleteComment: (orderNumber: string, commentId: number, token?: string) => request<{ status: string }>(`/orders/${orderNumber}/comments/${commentId}`, { method: "DELETE" }, token),
   decline: (orderNumber: string) => request<Order>(`/orders/${orderNumber}/decline`, { method: "POST" }),
   createCheckout: (orderNumber: string) => request<{ url: string }>(`/orders/${orderNumber}/checkout`, { method: "POST" }),
+  createGalleryInquiryCheckout: (orderNumber: string) => request<{ url: string }>(`/gallery-inquiries/${orderNumber}/checkout`, { method: "POST" }),
   confirmCheckout: (orderNumber: string, checkoutSessionId: string) => request<Order>(`/orders/${orderNumber}/confirm-payment`, { method: "POST", body: JSON.stringify({ checkoutSessionId }) }),
   listAdmin: (token: string, page: number) => request<PaginatedOrders>(`/admin/orders?page=${page}&page_size=10`, { method: "GET" }, token),
   setQuote: (token: string, orderNumber: string, quoteAmount: string) => request<Order>(`/admin/orders/${orderNumber}/quote`, { method: "POST", body: JSON.stringify({ quoteAmount }) }, token),

@@ -236,7 +236,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
       if (editingCategoryId !== null) {
         const category = categories.find((item) => item.id === editingCategoryId);
         if (!category) {
-          throw new Error("Category not found.");
+          throw new Error("Service not found.");
         }
         await categoryApi.update(token, editingCategoryId, categoryName, category.isArchived);
       } else {
@@ -245,9 +245,9 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
       setCategoryName("");
       setEditingCategoryId(null);
       await reloadCategories();
-      setCategoryMessage(editingCategoryId !== null ? "Category updated." : "Category created.");
+      setCategoryMessage(editingCategoryId !== null ? "Service updated." : "Service created.");
     } catch (nextError) {
-      setCategoryError(nextError instanceof Error ? nextError.message : "Unable to save category.");
+      setCategoryError(nextError instanceof Error ? nextError.message : "Unable to save service.");
     }
   };
 
@@ -257,9 +257,9 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
       setCategoryMessage("");
       await categoryApi.update(token, category.id, category.name, !category.isArchived);
       await reloadCategories();
-      setCategoryMessage(category.isArchived ? "Category restored." : "Category archived.");
+      setCategoryMessage(category.isArchived ? "Service restored." : "Service archived.");
     } catch (nextError) {
-      setCategoryError(nextError instanceof Error ? nextError.message : "Unable to update category.");
+      setCategoryError(nextError instanceof Error ? nextError.message : "Unable to update service.");
     }
   };
 
@@ -340,14 +340,14 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
             </details>
 
             <details style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-              <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Categories</summary>
+              <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Services</summary>
               <div style={{ display: "grid", gap: 12, padding: 16, borderTop: "1px solid var(--line)" }}>
                 <form onSubmit={handleCategorySubmit} style={{ display: "grid", gap: 12 }}>
-                  <input value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="Category name" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }} />
+                  <input value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="Service name" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }} />
                   {categoryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{categoryError}</p> : null}
                   {categoryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{categoryMessage}</p> : null}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                    <button type="submit" style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{editingCategoryId !== null ? "Update category" : "Create category"}</button>
+                    <button type="submit" style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{editingCategoryId !== null ? "Update service" : "Create service"}</button>
                     {editingCategoryId !== null ? <button type="button" onClick={() => { setEditingCategoryId(null); setCategoryName(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel edit</button> : null}
                   </div>
                 </form>

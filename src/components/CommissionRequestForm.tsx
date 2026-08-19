@@ -32,7 +32,7 @@ export default function CommissionRequestForm({ onOrderCreated }: CommissionRequ
       try {
         setCategories(await categoryApi.listPublic());
       } catch (nextError) {
-        setError(nextError instanceof Error ? nextError.message : "Unable to load categories.");
+        setError(nextError instanceof Error ? nextError.message : "Unable to load services.");
       }
     }
 

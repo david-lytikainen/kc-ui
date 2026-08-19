@@ -5,13 +5,17 @@ import { galleryApi, GalleryItem } from "../api";
 
 type GalleryPreviewProps = {
   refreshToken: number;
+  onOpenOrder: (orderNumber: string) => void;
 };
 
 
-export default function GalleryPreview({ refreshToken }: GalleryPreviewProps) {
+export default function GalleryPreview({ refreshToken, onOpenOrder }: GalleryPreviewProps) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [inquiryItemId, setInquiryItemId] = useState<number | null>(null);
+  const [inquiryBody, setInquiryBody] = useState("");
+  const [isSendingInquiry, setIsSendingInquiry] = useState(false);
 
   const formatCurrency = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 
@@ -21,6 +25,21 @@ export default function GalleryPreview({ refreshToken }: GalleryPreviewProps) {
       window.location.href = response.url;
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to start checkout.");
+    }
+  };
+
+  const handleInquiry = async (itemId: number) => {
+    try {
+      setIsSendingInquiry(true);
+      setError("");
+      const order = await galleryApi.createInquiry(itemId, inquiryBody);
+      setInquiryBody("");
+      setInquiryItemId(null);
+      onOpenOrder(order.orderNumber);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Unable to send question.");
+    } finally {
+      setIsSendingInquiry(false);
     }
   };
 
@@ -72,7 +91,19 @@ export default function GalleryPreview({ refreshToken }: GalleryPreviewProps) {
                 {item.priceCents !== null ? (
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
                     <p style={{ margin: 0, color: "var(--text-dark)", fontWeight: 700 }}>{formatCurrency(item.priceCents)}</p>
-                    <button type="button" onClick={() => void handleBuy(item.id)} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>Buy</button>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <button type="button" onClick={() => setInquiryItemId((current) => current === item.id ? null : item.id)} aria-label="Ask a question" title="Ask a question" style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>💬</button>
+                      <button type="button" onClick={() => void handleBuy(item.id)} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>Buy</button>
+                    </div>
+                  </div>
+                ) : null}
+                {inquiryItemId === item.id ? (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    <textarea value={inquiryBody} onChange={(event) => setInquiryBody(event.target.value)} placeholder="Ask a question" rows={3} style={{ width: "100%", padding: 12, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "0.95rem", resize: "vertical" }} />
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      <button type="button" onClick={() => void handleInquiry(item.id)} disabled={isSendingInquiry} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>{isSendingInquiry ? "Sending..." : "Send question"}</button>
+                      <button type="button" onClick={() => { setInquiryItemId(null); setInquiryBody(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel</button>
+                    </div>
                   </div>
                 ) : null}
               </div>
