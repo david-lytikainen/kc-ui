@@ -4,10 +4,11 @@ import { galleryApi, GalleryItem } from "../api";
 
 
 type GalleryPreviewProps = {
-  refreshToken: number;
+  mode?: "preview" | "full";
+  refreshToken?: number;
   onOpenOrder: (orderNumber: string) => void;
   onReady?: () => void;
-  onOpenFullGallery: () => void;
+  onOpenFullGallery?: () => void;
 };
 
 
@@ -19,7 +20,7 @@ function getItemsPerSlide() {
 }
 
 
-export default function GalleryPreview({ refreshToken, onReady, onOpenFullGallery, onOpenOrder }: GalleryPreviewProps) {
+export default function GalleryPreview({ mode = "preview", refreshToken = 0, onReady, onOpenFullGallery, onOpenOrder }: GalleryPreviewProps) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -31,10 +32,12 @@ export default function GalleryPreview({ refreshToken, onReady, onOpenFullGaller
 
   const formatCurrency = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
   const slideCount = Math.max(1, Math.ceil(items.length / itemsPerSlide));
-  const visibleItems = items.length
+  const visibleItems = mode === "full"
+    ? items
+    : items.length
     ? Array.from({ length: Math.min(itemsPerSlide, items.length) }, (_, index) => items[(currentSlide * itemsPerSlide + index) % items.length])
     : [];
-  const galleryColumns = `repeat(${Math.min(itemsPerSlide, Math.max(visibleItems.length, 1))}, minmax(0, 1fr))`;
+  const galleryColumns = mode === "full" ? "repeat(auto-fit, minmax(min(100%, 260px), 1fr))" : `repeat(${Math.min(itemsPerSlide, Math.max(visibleItems.length, 1))}, minmax(0, 1fr))`;
 
   const handleBuy = async (itemId: number) => {
     try {
@@ -92,6 +95,10 @@ export default function GalleryPreview({ refreshToken, onReady, onOpenFullGaller
   }, [onReady, refreshToken]);
 
   useEffect(() => {
+    if (mode === "full") {
+      return;
+    }
+
     const handleResize = () => {
       setItemsPerSlide(getItemsPerSlide());
       setCurrentSlide(0);
@@ -100,9 +107,13 @@ export default function GalleryPreview({ refreshToken, onReady, onOpenFullGaller
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
+    if (mode === "full") {
+      return;
+    }
+
     if (items.length <= itemsPerSlide) {
       return;
     }
@@ -112,7 +123,7 @@ export default function GalleryPreview({ refreshToken, onReady, onOpenFullGaller
     }, 5000);
 
     return () => window.clearInterval(intervalId);
-  }, [items.length, itemsPerSlide, slideCount]);
+  }, [items.length, itemsPerSlide, mode, slideCount]);
 
   return (
     <section id="gallery" style={{ display: "grid", gap: 16 }}>
@@ -153,7 +164,7 @@ export default function GalleryPreview({ refreshToken, onReady, onOpenFullGaller
             </article>
           ))}
           </div>
-          <button type="button" onClick={onOpenFullGallery} style={{ justifySelf: "start", border: 0, background: "transparent", color: "var(--text-dark)", padding: 0, marginBottom: 16, fontWeight: 800, textDecoration: "underline", textDecorationColor: "rgba(85, 116, 91, 0.35)", textUnderlineOffset: 4 }}>View Full Gallery</button>
+          {mode === "preview" && onOpenFullGallery ? <button type="button" onClick={onOpenFullGallery} style={{ justifySelf: "start", border: 0, background: "transparent", color: "var(--text-dark)", padding: 0, marginBottom: 16, fontWeight: 800, textDecoration: "underline", textDecorationColor: "rgba(85, 116, 91, 0.35)", textUnderlineOffset: 4 }}>View Full Gallery</button> : null}
         </div>
       ) : null}
     </section>

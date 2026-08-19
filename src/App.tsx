@@ -174,14 +174,14 @@ export default function App() {
               </div>
             </section>
             <div ref={galleryRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
-              <GalleryPreview refreshToken={galleryRefreshToken} onReady={handleGalleryReady} onOpenFullGallery={showFullGallery} />
+              <GalleryPreview refreshToken={galleryRefreshToken} onReady={handleGalleryReady} onOpenFullGallery={showFullGallery} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} />
             </div>
             <div ref={commissionRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
               <CommissionRequestForm onOrderCreated={(nextOrderNumber) => openOrder(nextOrderNumber)} />
             </div>
           </>
         ) : null}
-        {view === "gallery" ? <GalleryPage /> : null}
+        {view === "gallery" ? <GalleryPage onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} /> : null}
         {view === "login" || (view === "profile" && (!user || !token)) ? <AuthPanel onAuthed={handleAuthed} /> : null}
         {view === "profile" && user && token ? <ProfilePage token={token} user={user} onGalleryChanged={() => setGalleryRefreshToken((current) => current + 1)} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} onLogout={handleLogout} /> : null}
         {view === "order" && orderNumber ? <OrderPage orderNumber={orderNumber} token={token} onBackHome={showHome} /> : null}
