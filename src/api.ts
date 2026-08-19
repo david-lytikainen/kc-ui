@@ -83,6 +83,7 @@ export type Order = {
   shippingPostalCode: string | null;
   shippingCountry: string | null;
   paymentPending: boolean;
+  customerConfirmedAt: string | null;
   createdAt: string;
   updatedAt: string;
   viewerIsAdmin: boolean;
@@ -214,6 +215,7 @@ export const orderApi = {
   createCheckout: (orderNumber: string) => request<{ url: string }>(`/orders/${orderNumber}/checkout`, { method: "POST" }),
   createGalleryInquiryCheckout: (orderNumber: string) => request<{ url: string }>(`/gallery-inquiries/${orderNumber}/checkout`, { method: "POST" }),
   confirmCheckout: (orderNumber: string, checkoutSessionId: string) => request<Order>(`/orders/${orderNumber}/confirm-payment`, { method: "POST", body: JSON.stringify({ checkoutSessionId }) }),
+  confirmReceived: (orderNumber: string) => request<Order>(`/orders/${orderNumber}/confirm-received`, { method: "POST" }),
   listAdmin: (token: string, page: number) => request<PaginatedOrders>(`/admin/orders?page=${page}&page_size=10`, { method: "GET" }, token),
   setQuote: (token: string, orderNumber: string, quoteAmount: string) => request<Order>(`/admin/orders/${orderNumber}/quote`, { method: "POST", body: JSON.stringify({ quoteAmount }) }, token),
   declineAdmin: (token: string, orderNumber: string) => request<Order>(`/admin/orders/${orderNumber}/decline`, { method: "POST" }, token),

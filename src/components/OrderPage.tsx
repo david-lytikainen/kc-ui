@@ -28,6 +28,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingBody, setEditingBody] = useState("");
   const [quoteAmount, setQuoteAmount] = useState("");
+  const [isConfirmingReceived, setIsConfirmingReceived] = useState(false);
   const authToken = token || undefined;
 
   const viewerIsAdmin = Boolean(order?.viewerIsAdmin);
@@ -182,6 +183,18 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     }
   };
 
+  const handleConfirmReceived = async () => {
+    try {
+      clearFeedback();
+      const nextOrder = await orderApi.confirmReceived(orderNumber);
+      applyOrder(nextOrder);
+      setIsConfirmingReceived(false);
+      setMessage("Receipt confirmed.");
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Unable to confirm receipt.");
+    }
+  };
+
   if (isLoading) {
     return <p style={{ margin: 0, color: "var(--muted)" }}>Loading order...</p>;
   }
@@ -224,6 +237,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
           </div>
         ) : null}
         {isGalleryOrder && order.paymentPending ? <p style={{ margin: 0, color: "var(--muted)" }}>Payment is still processing. This page will refresh automatically.</p> : null}
+        {order.customerConfirmedAt ? <p style={{ margin: 0, color: "var(--success)" }}>Customer confirmed receipt on {new Date(order.customerConfirmedAt).toLocaleString()}.</p> : null}
       </div>
 
       {!viewerIsAdmin && !isGalleryOrder && !isGalleryInquiry && order.status === "quoted" ? (
@@ -235,6 +249,19 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
       {!viewerIsAdmin && isGalleryInquiry && order.quoteAmountCents !== null ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
           <button type="button" onClick={() => void handleCreateCheckout()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Buy artwork</button>
+        </div>
+      ) : null}
+      {!viewerIsAdmin && !isGalleryInquiry && order.status === "delivered" && !order.customerConfirmedAt ? (
+        <div style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+          <p style={{ margin: 0, fontWeight: 700 }}>Did you receive this order?</p>
+          {isConfirmingReceived ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+              <button type="button" onClick={() => void handleConfirmReceived()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Yes, confirm</button>
+              <button type="button" onClick={() => setIsConfirmingReceived(false)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>No</button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setIsConfirmingReceived(true)} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Confirm received</button>
+          )}
         </div>
       ) : null}
 
