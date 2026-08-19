@@ -257,7 +257,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
         </div>
       ) : null}
 
-      {(!isGalleryOrder || isGalleryInquiry) ? <section style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+      {(!isGalleryOrder || !order.paymentPending) ? <section style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
         <p style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Comments</p>
         {order.comments.map((comment) => (
           <article key={comment.id} id={`comment-${comment.id}`} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid var(--line)", borderRadius: 8, background: comment.authorRole === "admin" ? "var(--bg-navbar)" : "var(--bg-panel)" }}>
