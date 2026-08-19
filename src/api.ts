@@ -98,6 +98,7 @@ export type OrderSummary = {
   categoryName: string;
   status: string;
   amountCents: number | null;
+  customerConfirmedAt: string | null;
   canOpen: boolean;
   createdAt: string;
   updatedAt: string;

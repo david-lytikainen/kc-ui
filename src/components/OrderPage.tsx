@@ -208,7 +208,14 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
       <button type="button" onClick={onBackHome} style={{ justifySelf: "start", border: 0, background: "transparent", color: "var(--text-dark)", padding: 0, fontWeight: 700 }}>Back home</button>
       <div style={{ display: "grid", gap: 8, maxWidth: 680 }}>
         <p style={{ margin: 0, color: "var(--leaf-700)", fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase" }}>Order {order.orderNumber}</p>
-        <h2 style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontSize: "clamp(1.6rem, 4vw, 2.2rem)", fontWeight: 500 }}>{order.customerName}</h2>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+          <h2 style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontSize: "clamp(1.6rem, 4vw, 2.2rem)", fontWeight: 500 }}>{order.customerName}</h2>
+          {order.customerConfirmedAt ? (
+            <span title="Customer confirmed receipt" aria-label="Customer confirmed receipt" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 28, height: 28, borderRadius: 999, background: "rgba(47, 133, 90, 0.16)", color: "var(--success)", fontWeight: 900 }}>
+              ✓
+            </span>
+          ) : null}
+        </div>
       </div>
       <div style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
         <p style={{ margin: 0 }}>Status: <strong>{order.status}</strong></p>
