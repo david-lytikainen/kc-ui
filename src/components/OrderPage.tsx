@@ -25,6 +25,9 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [commentBody, setCommentBody] = useState("");
+  const [commentSubmitError, setCommentSubmitError] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [pendingEmailCommentIds, setPendingEmailCommentIds] = useState<number[]>([]);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingBody, setEditingBody] = useState("");
   const [quoteAmount, setQuoteAmount] = useState("");
@@ -37,6 +40,10 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
 
   const applyOrder = (nextOrder: Order) => {
     setOrder(nextOrder);
+    setPendingEmailCommentIds((current) => current.filter((commentId) => {
+      const comment = nextOrder.comments.find((entry) => entry.id === commentId);
+      return Boolean(comment) && !comment?.emailSentAt && !comment?.emailError;
+    }));
     if (nextOrder.orderKind === "commission" && nextOrder.quoteAmountCents !== null) {
       setQuoteAmount((nextOrder.quoteAmountCents / 100).toFixed(2));
       return;
@@ -99,20 +106,61 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     return () => window.clearTimeout(timeoutId);
   }, [order?.paymentPending]);
 
+  useEffect(() => {
+    if (!pendingEmailCommentIds.length) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void reloadOrder();
+    }, 1500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pendingEmailCommentIds, orderNumber]);
+
   const ownRole = viewerIsAdmin ? "admin" : "customer";
 
   const editableCommentIds = new Set((order?.comments ?? []).filter((comment) => comment.authorRole === ownRole).map((comment) => comment.id));
 
   const handleCommentSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const nextBody = commentBody.trim();
+    if (!nextBody || !order) {
+      return;
+    }
+    const tempCommentId = -Date.now();
+    const now = new Date().toISOString();
+    const tempComment = {
+      id: tempCommentId,
+      authorRole: ownRole,
+      body: nextBody,
+      emailSentAt: null,
+      emailError: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+
     try {
       clearFeedback();
-      await orderApi.createComment(orderNumber, commentBody, authToken);
+      setCommentSubmitError("");
+      setIsSubmittingComment(true);
+      setOrder((current) => current ? { ...current, comments: [...current.comments, tempComment] } : current);
       setCommentBody("");
-      await reloadOrder();
-      setMessage("Comment added.");
+      const savedComment = await orderApi.createComment(orderNumber, nextBody, authToken);
+      setOrder((current) => current ? {
+        ...current,
+        comments: current.comments.map((comment) => comment.id === tempCommentId ? savedComment : comment),
+      } : current);
+      setPendingEmailCommentIds((current) => [...current, savedComment.id]);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Unable to add comment.");
+      setOrder((current) => current ? {
+        ...current,
+        comments: current.comments.filter((comment) => comment.id !== tempCommentId),
+      } : current);
+      setCommentBody(nextBody);
+      setCommentSubmitError(nextError instanceof Error ? nextError.message : "Unable to add comment.");
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -306,7 +354,10 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
                 </div>
               </div>
             ) : <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{comment.body}</p>}
-            {editableCommentIds.has(comment.id) && editingCommentId !== comment.id ? (
+            {"emailError" in comment && comment.emailError ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.85rem" }}>{comment.emailError}</p> : null}
+            {"emailSentAt" in comment && comment.emailSentAt ? <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>Email has been sent.</p> : null}
+            {comment.id < 0 ? <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>Saving...</p> : null}
+            {comment.id > 0 && editableCommentIds.has(comment.id) && editingCommentId !== comment.id ? (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
                 <button type="button" onClick={() => { setEditingCommentId(comment.id); setEditingBody(comment.body); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Edit</button>
                 <button type="button" onClick={() => void handleCommentDelete(comment.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
@@ -316,7 +367,8 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
         ))}
         <form onSubmit={handleCommentSubmit} style={{ display: "grid", gap: 12 }}>
           <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} placeholder={viewerIsAdmin ? "Add an admin comment" : "Add a customer comment"} rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem", resize: "vertical" }} />
-          <button type="submit" style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Add comment</button>
+          {commentSubmitError ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.9rem" }}>{commentSubmitError}</p> : null}
+          <button type="submit" disabled={isSubmittingComment} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{isSubmittingComment ? "Posting..." : "Add comment"}</button>
         </form>
       </section> : null}
 

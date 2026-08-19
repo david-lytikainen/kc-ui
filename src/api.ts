@@ -55,6 +55,7 @@ export type OrderComment = {
   authorRole: string;
   body: string;
   emailSentAt: string | null;
+  emailError: string | null;
   createdAt: string;
   updatedAt: string;
 };
