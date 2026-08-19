@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { authApi, User } from "./api";
 import AuthPanel from "./components/AuthPanel";
@@ -46,7 +46,6 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [galleryRefreshToken, setGalleryRefreshToken] = useState(0);
   const [pendingScroll, setPendingScroll] = useState<"gallery" | "commission" | null>(null);
-  const [isGalleryReady, setIsGalleryReady] = useState(false);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -94,23 +93,15 @@ export default function App() {
       return;
     }
 
-    if (pendingScroll === "commission" && !isGalleryReady) {
-      return;
-    }
-
     const target = pendingScroll === "gallery" ? galleryRef.current : commissionRef.current;
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
     setPendingScroll(null);
-  }, [isGalleryReady, pendingScroll, view]);
+  }, [pendingScroll, view]);
 
   const showHome = (section: "gallery" | "commission" | null = null) => {
-    const isReturningHome = view !== "home";
     window.history.pushState({}, "", "/");
     setView("home");
     setOrderNumber("");
-    if (section === "commission" && isReturningHome) {
-      setIsGalleryReady(false);
-    }
     setPendingScroll(section);
   };
 
@@ -147,10 +138,6 @@ export default function App() {
     showHome();
   };
 
-  const handleGalleryReady = useCallback(() => {
-    setIsGalleryReady(true);
-  }, []);
-
   return (
     <div style={{ minHeight: "100vh" }}>
       <Navigation
@@ -174,7 +161,7 @@ export default function App() {
               </div>
             </section>
             <div ref={galleryRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
-              <GalleryPreview refreshToken={galleryRefreshToken} onReady={handleGalleryReady} onOpenFullGallery={showFullGallery} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} />
+              <GalleryPreview refreshToken={galleryRefreshToken} onOpenFullGallery={showFullGallery} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} />
             </div>
             <div ref={commissionRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
               <CommissionRequestForm onOrderCreated={(nextOrderNumber) => openOrder(nextOrderNumber)} />

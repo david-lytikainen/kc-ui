@@ -182,7 +182,7 @@ export const galleryApi = {
   remove: (token: string, itemId: number) => request<{ status: string }>(`/admin/gallery/${itemId}`, { method: "DELETE" }, token),
   reorder: (token: string, orderedIds: number[]) => request<{ status: string }>("/admin/gallery/reorder", { method: "POST", body: JSON.stringify({ orderedIds }) }, token),
   createCheckout: (itemId: number) => request<{ url: string }>(`/gallery/${itemId}/checkout`, { method: "POST" }),
-  createInquiry: (itemId: number, body: string) => request<Order>(`/gallery/${itemId}/inquiries`, { method: "POST", body: JSON.stringify({ body }) }),
+  createInquiry: (itemId: number, customerEmail: string, body: string) => request<Order>(`/gallery/${itemId}/inquiries`, { method: "POST", body: JSON.stringify({ customerEmail, body }) }),
 };
 
 export const categoryApi = {

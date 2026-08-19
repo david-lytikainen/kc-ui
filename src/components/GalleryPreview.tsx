@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
 import { galleryApi, GalleryItem } from "../api";
+import { normalizeEmailInput } from "../inputFormatting";
 
 
 type GalleryPreviewProps = {
   mode?: "preview" | "full";
   refreshToken?: number;
   onOpenOrder: (orderNumber: string) => void;
-  onReady?: () => void;
   onOpenFullGallery?: () => void;
 };
 
@@ -20,13 +20,14 @@ function getItemsPerSlide() {
 }
 
 
-export default function GalleryPreview({ mode = "preview", refreshToken = 0, onReady, onOpenFullGallery, onOpenOrder }: GalleryPreviewProps) {
+export default function GalleryPreview({ mode = "preview", refreshToken = 0, onOpenFullGallery, onOpenOrder }: GalleryPreviewProps) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [inquiryItemId, setInquiryItemId] = useState<number | null>(null);
+  const [inquiryEmail, setInquiryEmail] = useState("");
   const [inquiryBody, setInquiryBody] = useState("");
   const [isSendingInquiry, setIsSendingInquiry] = useState(false);
 
@@ -52,7 +53,13 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onR
     try {
       setIsSendingInquiry(true);
       setError("");
-      const order = await galleryApi.createInquiry(itemId, inquiryBody);
+      const customerEmail = normalizeEmailInput(inquiryEmail);
+      if (!customerEmail || !inquiryBody.trim()) {
+        setError("Email and question message are required.");
+        return;
+      }
+      const order = await galleryApi.createInquiry(itemId, customerEmail, inquiryBody);
+      setInquiryEmail("");
       setInquiryBody("");
       setInquiryItemId(null);
       onOpenOrder(order.orderNumber);
@@ -83,7 +90,6 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onR
       } finally {
         if (isActive) {
           setIsLoading(false);
-          onReady?.();
         }
       }
     }
@@ -92,7 +98,7 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onR
     return () => {
       isActive = false;
     };
-  }, [onReady, refreshToken]);
+  }, [refreshToken]);
 
   useEffect(() => {
     if (mode === "full") {
@@ -153,10 +159,11 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onR
                 ) : null}
                 {inquiryItemId === item.id ? (
                   <div style={{ display: "grid", gap: 8 }}>
+                    <input value={inquiryEmail} onChange={(event) => setInquiryEmail(normalizeEmailInput(event.target.value))} placeholder="Your email" type="email" autoCapitalize="none" autoCorrect="off" inputMode="email" style={{ width: "100%", padding: 12, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "0.95rem" }} />
                     <textarea value={inquiryBody} onChange={(event) => setInquiryBody(event.target.value)} placeholder="Ask a question" rows={3} style={{ width: "100%", padding: 12, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "0.95rem", resize: "vertical" }} />
                     <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                       <button type="button" onClick={() => void handleInquiry(item.id)} disabled={isSendingInquiry} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>{isSendingInquiry ? "Sending..." : "Send question"}</button>
-                      <button type="button" onClick={() => { setInquiryItemId(null); setInquiryBody(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel</button>
+                      <button type="button" onClick={() => { setInquiryItemId(null); setInquiryEmail(""); setInquiryBody(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel</button>
                     </div>
                   </div>
                 ) : null}
