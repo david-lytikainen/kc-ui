@@ -23,13 +23,20 @@ export type GalleryItem = {
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
+  images: GalleryImage[];
+};
+
+export type GalleryImage = {
+  id: number;
+  imageUrl: string;
+  sourceImageUrl: string;
+  s3Key: string | null;
+  displayOrder: number;
 };
 
 export type GalleryDraft = {
   title: string;
   description: string;
-  imageUrl: string;
-  s3Key: string;
   price: string;
 };
 
@@ -155,29 +162,22 @@ export const authApi = {
 
 export const galleryApi = {
   listPublic: () => request<GalleryItem[]>("/gallery"),
+  getItem: (itemId: number) => request<GalleryItem>(`/gallery/${itemId}`),
   listAdmin: (token: string) => request<GalleryItem[]>("/admin/gallery", { method: "GET" }, token),
-  create: (token: string, payload: GalleryDraft, file?: File | null) => {
+  create: (token: string, payload: GalleryDraft, files: File[] = []) => {
     const formData = new FormData();
     formData.append("title", payload.title);
     formData.append("description", payload.description);
     formData.append("price_amount", payload.price);
-    formData.append("existing_image_url", payload.imageUrl);
-    formData.append("existing_s3_key", payload.s3Key);
-    if (file) {
-      formData.append("file", file);
-    }
+    files.forEach((file) => formData.append("files", file));
     return request<GalleryItem>("/admin/gallery", { method: "POST", body: formData }, token);
   },
-  update: (token: string, itemId: number, payload: GalleryDraft, file?: File | null) => {
+  update: (token: string, itemId: number, payload: GalleryDraft, files: File[] = []) => {
     const formData = new FormData();
     formData.append("title", payload.title);
     formData.append("description", payload.description);
     formData.append("price_amount", payload.price);
-    formData.append("existing_image_url", payload.imageUrl);
-    formData.append("existing_s3_key", payload.s3Key);
-    if (file) {
-      formData.append("file", file);
-    }
+    files.forEach((file) => formData.append("files", file));
     return request<GalleryItem>(`/admin/gallery/${itemId}`, { method: "PATCH", body: formData }, token);
   },
   remove: (token: string, itemId: number) => request<{ status: string }>(`/admin/gallery/${itemId}`, { method: "DELETE" }, token),

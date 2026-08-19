@@ -7,6 +7,7 @@ import { normalizeEmailInput } from "../inputFormatting";
 type GalleryPreviewProps = {
   mode?: "preview" | "full";
   refreshToken?: number;
+  onOpenItem?: (itemId: number) => void;
   onOpenOrder: (orderNumber: string) => void;
   onOpenFullGallery?: () => void;
 };
@@ -20,7 +21,7 @@ function getItemsPerSlide() {
 }
 
 
-export default function GalleryPreview({ mode = "preview", refreshToken = 0, onOpenFullGallery, onOpenOrder }: GalleryPreviewProps) {
+export default function GalleryPreview({ mode = "preview", refreshToken = 0, onOpenFullGallery, onOpenItem, onOpenOrder }: GalleryPreviewProps) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -144,9 +145,11 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
           <div style={{ display: "grid", gridTemplateColumns: galleryColumns, gap: 12 }}>
           {visibleItems.map((item) => (
             <article key={item.id} style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-gallery-item)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-              <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "var(--linen)" }} />
+              <button type="button" onClick={() => onOpenItem?.(item.id)} style={{ display: "block", width: "100%", padding: 0, border: 0, background: "transparent", cursor: onOpenItem ? "pointer" : "default" }}>
+                <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "var(--linen)" }} />
+              </button>
               <div style={{ display: "grid", gap: 10, padding: 16 }}>
-                <p style={{ margin: 0, fontWeight: 700 }}>{item.title}</p>
+                <button type="button" onClick={() => onOpenItem?.(item.id)} style={{ width: "fit-content", padding: 0, border: 0, background: "transparent", color: "var(--text-dark)", fontWeight: 700, fontSize: "1rem", textAlign: "left", cursor: onOpenItem ? "pointer" : "default" }}>{item.title}</button>
                 <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{item.description}</p>
                 {item.priceCents !== null ? (
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>

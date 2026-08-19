@@ -11,7 +11,7 @@ type ProfilePageProps = {
 };
 
 
-const emptyDraft: GalleryDraft = { title: "", description: "", imageUrl: "", s3Key: "", price: "" };
+const emptyDraft: GalleryDraft = { title: "", description: "", price: "" };
 
 
 function getOrderKindLabel(orderKind: string) {
@@ -49,8 +49,8 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isSavingGallery, setIsSavingGallery] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryName, setCategoryName] = useState("");
@@ -74,11 +74,13 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
 
   useEffect(() => {
     return () => {
-      if (previewUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl);
-      }
+      previewUrls.forEach((previewUrl) => {
+        if (previewUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(previewUrl);
+        }
+      });
     };
-  }, [previewUrl]);
+  }, [previewUrls]);
 
   useEffect(() => {
     if (user.role !== "admin") {
@@ -130,10 +132,15 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   const isEditing = editingId !== null;
 
   const resetDraft = () => {
+    previewUrls.forEach((previewUrl) => {
+      if (previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    });
     setDraft(emptyDraft);
     setEditingId(null);
-    setSelectedImageFile(null);
-    setPreviewUrl("");
+    setSelectedImageFiles([]);
+    setPreviewUrls([]);
   };
 
   const reloadCategories = async () => {
@@ -141,18 +148,24 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   };
 
   const handleUpload = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
+    const nextFiles = Array.from(event.target.files ?? []);
+    if (!nextFiles.length) {
       return;
     }
-
-    if (previewUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(previewUrl);
+    if (nextFiles.length > 5) {
+      setGalleryError("Choose up to 5 images per gallery item.");
+      event.target.value = "";
+      return;
     }
+    previewUrls.forEach((previewUrl) => {
+      if (previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    });
     setGalleryError("");
-    setGalleryMessage("Image ready to save.");
-    setSelectedImageFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    setGalleryMessage(`${nextFiles.length} image${nextFiles.length === 1 ? "" : "s"} ready to save.`);
+    setSelectedImageFiles(nextFiles);
+    setPreviewUrls(nextFiles.map((file) => URL.createObjectURL(file)));
     event.target.value = "";
   };
 
@@ -169,13 +182,13 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
       setIsSavingGallery(true);
       setGalleryError("");
       setGalleryMessage("");
-      if (!selectedImageFile && !draft.s3Key && !draft.imageUrl) {
-        throw new Error("Choose an image before saving this gallery item.");
+      if (!selectedImageFiles.length && !isEditing) {
+        throw new Error("Choose at least one image before saving this gallery item.");
       }
       if (isEditing && editingId !== null) {
-        await galleryApi.update(token, editingId, draft, selectedImageFile);
+        await galleryApi.update(token, editingId, draft, selectedImageFiles);
       } else {
-        await galleryApi.create(token, draft, selectedImageFile);
+        await galleryApi.create(token, draft, selectedImageFiles);
       }
       await refreshAdminItems();
       resetDraft();
@@ -303,10 +316,16 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                   <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem", resize: "vertical" }} />
                   <input value={draft.price} onChange={(event) => setDraft((current) => ({ ...current, price: event.target.value }))} placeholder="Optional price in dollars" inputMode="decimal" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }} />
                   <label style={{ display: "grid", gap: 8, color: "var(--muted)" }}>
-                    <span>{isEditing ? "Replace artwork image" : "Artwork image"}</span>
-                    <input type="file" accept="image/*" onChange={handleUpload} />
+                    <span>{isEditing ? "Replace artwork images" : "Artwork images"} (up to 5)</span>
+                    <input type="file" accept="image/*" multiple onChange={handleUpload} />
                   </label>
-                  {previewUrl ? <img src={previewUrl} alt="Selected preview" style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} /> : null}
+                  {previewUrls.length ? (
+                    <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(96px, 1fr))" }}>
+                      {previewUrls.map((previewUrl, index) => (
+                        <img key={previewUrl} src={previewUrl} alt={`Selected preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} />
+                      ))}
+                    </div>
+                  ) : null}
                   {galleryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{galleryError}</p> : null}
                   {galleryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{galleryMessage}</p> : null}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
@@ -332,7 +351,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                             <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{isSavingOrder ? "Saving order..." : "Drag to reorder"}</p>
                           </div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
-                            <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "", price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImageFile(null); setPreviewUrl(item.imageUrl); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                            <button type="button" onClick={() => { previewUrls.forEach((previewUrl) => { if (previewUrl.startsWith("blob:")) { URL.revokeObjectURL(previewUrl); } }); setEditingId(item.id); setDraft({ title: item.title, description: item.description, price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImageFiles([]); setPreviewUrls(item.images.map((image) => image.imageUrl)); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
                             {pendingDeleteId === item.id ? (
                               <>
                                 <button type="button" onClick={() => void handleDelete(item.id)} disabled={deletingId === item.id} style={{ border: "1px solid var(--danger)", borderRadius: 8, padding: "10px 12px", background: "var(--danger)", color: "var(--paper)", fontWeight: 800, opacity: deletingId === item.id ? 0.7 : 1 }}>{deletingId === item.id ? "Deleting..." : "Confirm delete"}</button>

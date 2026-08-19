@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { authApi, User } from "./api";
 import AuthPanel from "./components/AuthPanel";
 import CommissionRequestForm from "./components/CommissionRequestForm";
+import GalleryItemPage from "./components/GalleryItemPage";
 import GalleryPage from "./components/GalleryPage";
 import GalleryPreview from "./components/GalleryPreview";
 import Navigation from "./components/Navigation";
@@ -10,28 +11,33 @@ import OrderPage from "./components/OrderPage";
 import ProfilePage from "./components/ProfilePage";
 
 
-type AppView = "home" | "gallery" | "login" | "profile" | "order";
+type AppView = "home" | "gallery" | "gallery_item" | "login" | "profile" | "order";
 
 
-function parseRoute(): { view: AppView; orderNumber: string } {
+function parseRoute(): { view: AppView; orderNumber: string; galleryItemId: number | null } {
   if (window.location.pathname === "/admin" || window.location.pathname === "/admin/sign-in") {
-    return { view: "login", orderNumber: "" };
+    return { view: "login", orderNumber: "", galleryItemId: null };
   }
 
   if (window.location.pathname === "/admin/profile") {
-    return { view: "profile", orderNumber: "" };
+    return { view: "profile", orderNumber: "", galleryItemId: null };
   }
 
   if (window.location.pathname === "/gallery") {
-    return { view: "gallery", orderNumber: "" };
+    return { view: "gallery", orderNumber: "", galleryItemId: null };
+  }
+
+  const galleryMatch = window.location.pathname.match(/^\/gallery\/(\d+)\/?$/);
+  if (galleryMatch) {
+    return { view: "gallery_item", orderNumber: "", galleryItemId: Number(galleryMatch[1]) };
   }
 
   const match = window.location.pathname.match(/^\/order\/(\d{6})\/?$/);
   if (match) {
-    return { view: "order", orderNumber: match[1] };
+    return { view: "order", orderNumber: match[1], galleryItemId: null };
   }
 
-  return { view: "home", orderNumber: "" };
+  return { view: "home", orderNumber: "", galleryItemId: null };
 }
 
 
@@ -41,6 +47,7 @@ export default function App() {
   const commissionRef = useRef<HTMLDivElement | null>(null);
   const [view, setView] = useState<AppView>(initialRoute.view);
   const [orderNumber, setOrderNumber] = useState(initialRoute.orderNumber);
+  const [galleryItemId, setGalleryItemId] = useState<number | null>(initialRoute.galleryItemId);
   const [token, setToken] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [authError, setAuthError] = useState("");
@@ -73,6 +80,7 @@ export default function App() {
       const nextRoute = parseRoute();
       setView(nextRoute.view);
       setOrderNumber(nextRoute.orderNumber);
+      setGalleryItemId(nextRoute.galleryItemId);
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -102,6 +110,7 @@ export default function App() {
     window.history.pushState({}, "", "/");
     setView("home");
     setOrderNumber("");
+    setGalleryItemId(null);
     setPendingScroll(section);
   };
 
@@ -109,18 +118,28 @@ export default function App() {
     window.history.pushState({}, "", "/admin/profile");
     setView("profile");
     setOrderNumber("");
+    setGalleryItemId(null);
   };
 
   const showFullGallery = () => {
     window.history.pushState({}, "", "/gallery");
     setView("gallery");
     setOrderNumber("");
+    setGalleryItemId(null);
     setPendingScroll(null);
+  };
+
+  const openGalleryItem = (itemId: number) => {
+    window.history.pushState({}, "", `/gallery/${itemId}`);
+    setGalleryItemId(itemId);
+    setOrderNumber("");
+    setView("gallery_item");
   };
 
   const openOrder = (nextOrderNumber: string) => {
     window.history.pushState({}, "", `/order/${nextOrderNumber}`);
     setOrderNumber(nextOrderNumber);
+    setGalleryItemId(null);
     setView("order");
   };
 
@@ -161,14 +180,15 @@ export default function App() {
               </div>
             </section>
             <div ref={galleryRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
-              <GalleryPreview refreshToken={galleryRefreshToken} onOpenFullGallery={showFullGallery} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} />
+              <GalleryPreview refreshToken={galleryRefreshToken} onOpenFullGallery={showFullGallery} onOpenItem={openGalleryItem} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} />
             </div>
             <div ref={commissionRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
               <CommissionRequestForm onOrderCreated={(nextOrderNumber) => openOrder(nextOrderNumber)} />
             </div>
           </>
         ) : null}
-        {view === "gallery" ? <GalleryPage onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} /> : null}
+        {view === "gallery" ? <GalleryPage onOpenItem={openGalleryItem} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} /> : null}
+        {view === "gallery_item" && galleryItemId !== null ? <GalleryItemPage itemId={galleryItemId} onBackToGallery={showFullGallery} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} /> : null}
         {view === "login" || (view === "profile" && (!user || !token)) ? <AuthPanel onAuthed={handleAuthed} /> : null}
         {view === "profile" && user && token ? <ProfilePage token={token} user={user} onGalleryChanged={() => setGalleryRefreshToken((current) => current + 1)} onOpenOrder={(nextOrderNumber) => openOrder(nextOrderNumber)} onLogout={handleLogout} /> : null}
         {view === "order" && orderNumber ? <OrderPage orderNumber={orderNumber} token={token} onBackHome={showHome} /> : null}
