@@ -52,6 +52,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   const [isLoadingOrders, setIsLoadingOrders] = useState(user.role === "admin");
   const [ordersError, setOrdersError] = useState("");
   const [galleryColumns, setGalleryColumns] = useState(getGalleryColumns);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setGalleryColumns(getGalleryColumns());
@@ -193,7 +194,22 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
     }
   };
 
-  const handleDrop = (targetId: number) => {
+  const saveOrder = async (orderedIds: number[]) => {
+    try {
+      setIsSavingOrder(true);
+      setGalleryError("");
+      setGalleryMessage("");
+      await galleryApi.reorder(token, orderedIds);
+      await refreshAdminItems();
+      setGalleryMessage("Gallery order saved.");
+    } catch (nextError) {
+      setGalleryError(nextError instanceof Error ? nextError.message : "Unable to save order.");
+    } finally {
+      setIsSavingOrder(false);
+    }
+  };
+
+  const handleDrop = async (targetId: number) => {
     if (draggingId === null || draggingId === targetId) {
       return;
     }
@@ -209,18 +225,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
     nextItems.splice(toIndex, 0, movedItem);
     setItems(nextItems);
     setDraggingId(null);
-  };
-
-  const saveOrder = async () => {
-    try {
-      setGalleryError("");
-      setGalleryMessage("");
-      await galleryApi.reorder(token, items.map((item) => item.id));
-      await refreshAdminItems();
-      setGalleryMessage("Gallery order saved.");
-    } catch (nextError) {
-      setGalleryError(nextError instanceof Error ? nextError.message : "Unable to save order.");
-    }
+    await saveOrder(nextItems.map((item) => item.id));
   };
 
   const handleCategorySubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -313,7 +318,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                           <span style={{ position: "absolute", top: 12, right: 12, color: "var(--leaf-700)", fontSize: "1rem", fontWeight: 700, letterSpacing: 1, cursor: "grab" }} aria-hidden="true">⋮⋮</span>
                           <div style={{ display: "grid", gap: 6, paddingRight: 24 }}>
                             <p style={{ margin: 0, fontWeight: 700 }}>{item.title}</p>
-                            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>Drag to reorder</p>
+                            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{isSavingOrder ? "Saving order..." : "Drag to reorder"}</p>
                           </div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
                             <button type="button" onClick={() => { setEditingId(item.id); setDraft({ title: item.title, description: item.description, imageUrl: item.sourceImageUrl, s3Key: item.s3Key ?? "", price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImageFile(null); setPreviewUrl(item.imageUrl); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
@@ -329,7 +334,6 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                         </article>
                       ))}
                     </div>
-                    {items.length > 1 ? <button type="button" onClick={() => void saveOrder()} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Save gallery order</button> : null}
                   </div>
                 ) : null}
               </div>
