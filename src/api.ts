@@ -92,6 +92,8 @@ export type Order = {
   size: string;
   status: string;
   quoteAmountCents: number | null;
+  payableAmountCents: number | null;
+  appliedReviewDiscountCents: number;
   galleryImageUrl: string | null;
   shippingName: string | null;
   shippingLine1: string | null;
@@ -110,6 +112,7 @@ export type Order = {
   review: OrderReview | null;
   canLeaveReview: boolean;
   reviewDiscountEligible: boolean;
+  reviewDiscountAvailable: boolean;
 };
 
 export type OrderSummary = {
@@ -196,7 +199,7 @@ export const galleryApi = {
   },
   remove: (token: string, itemId: number) => request<{ status: string }>(`/admin/gallery/${itemId}`, { method: "DELETE" }, token),
   reorder: (token: string, orderedIds: number[]) => request<{ status: string }>("/admin/gallery/reorder", { method: "POST", body: JSON.stringify({ orderedIds }) }, token),
-  createCheckout: (itemId: number) => request<{ url: string }>(`/gallery/${itemId}/checkout`, { method: "POST" }),
+  createCheckout: (itemId: number, customerEmail: string) => request<{ url: string }>(`/gallery/${itemId}/checkout`, { method: "POST", body: JSON.stringify({ customerEmail }) }),
   createInquiry: (itemId: number, customerEmail: string, body: string) => request<Order>(`/gallery/${itemId}/inquiries`, { method: "POST", body: JSON.stringify({ customerEmail, body }) }),
 };
 

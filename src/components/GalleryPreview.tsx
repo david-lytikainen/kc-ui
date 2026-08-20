@@ -31,6 +31,9 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
   const [inquiryEmail, setInquiryEmail] = useState("");
   const [inquiryBody, setInquiryBody] = useState("");
   const [isSendingInquiry, setIsSendingInquiry] = useState(false);
+  const [checkoutItemId, setCheckoutItemId] = useState<number | null>(null);
+  const [checkoutEmail, setCheckoutEmail] = useState("");
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
 
   const formatCurrency = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
   const slideCount = Math.max(1, Math.ceil(items.length / itemsPerSlide));
@@ -43,10 +46,19 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
 
   const handleBuy = async (itemId: number) => {
     try {
-      const response = await galleryApi.createCheckout(itemId);
+      setIsStartingCheckout(true);
+      setError("");
+      const customerEmail = normalizeEmailInput(checkoutEmail);
+      if (!customerEmail) {
+        setError("Email is required to start checkout.");
+        return;
+      }
+      const response = await galleryApi.createCheckout(itemId, customerEmail);
       window.location.href = response.url;
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to start checkout.");
+    } finally {
+      setIsStartingCheckout(false);
     }
   };
 
@@ -156,7 +168,17 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
                     <p style={{ margin: 0, color: "var(--text-dark)", fontWeight: 700 }}>{formatCurrency(item.priceCents)}</p>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       <button type="button" onClick={() => setInquiryItemId((current) => current === item.id ? null : item.id)} aria-label="Ask a question" title="Ask a question" style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>💬</button>
-                      <button type="button" onClick={() => void handleBuy(item.id)} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>Buy</button>
+                      <button type="button" onClick={() => setCheckoutItemId((current) => current === item.id ? null : item.id)} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>Buy</button>
+                    </div>
+                  </div>
+                ) : null}
+                {checkoutItemId === item.id ? (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    <input value={checkoutEmail} onChange={(event) => setCheckoutEmail(normalizeEmailInput(event.target.value))} placeholder="Email for checkout" type="email" autoCapitalize="none" autoCorrect="off" inputMode="email" style={{ width: "100%", padding: 12, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "0.95rem" }} />
+                    <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>If this email has an unused 10% review reward, it will apply automatically at checkout.</p>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      <button type="button" onClick={() => void handleBuy(item.id)} disabled={isStartingCheckout} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>{isStartingCheckout ? "Starting..." : "Start checkout"}</button>
+                      <button type="button" onClick={() => { setCheckoutItemId(null); setCheckoutEmail(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel</button>
                     </div>
                   </div>
                 ) : null}

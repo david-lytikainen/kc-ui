@@ -297,6 +297,9 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
         {!isGalleryOrder && !isGalleryInquiry ? <p style={{ margin: 0 }}>Size: {order.size}</p> : null}
         {!isGalleryOrder && !isGalleryInquiry ? <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{order.instructions}</p> : null}
         <p style={{ margin: 0 }}>{isGalleryOrder || isGalleryInquiry ? "Amount" : "Quote"}: {formatCurrency(order.quoteAmountCents)}</p>
+        {order.appliedReviewDiscountCents > 0 ? <p style={{ margin: 0, color: "var(--success)" }}>Review discount: -{formatCurrency(order.appliedReviewDiscountCents)}</p> : null}
+        {order.payableAmountCents !== null ? <p style={{ margin: 0, fontWeight: 700 }}>{order.paymentPending || order.status === "accepted" || order.status === "in_progress" || order.status === "shipped" || order.status === "delivered" ? "Paid total" : "Total due"}: {formatCurrency(order.payableAmountCents)}</p> : null}
+        {order.reviewDiscountAvailable && !viewerIsAdmin && (order.status === "quoted" || isGalleryInquiry) ? <p style={{ margin: 0, color: "var(--muted)" }}>Your unused 10% review reward will apply automatically at checkout.</p> : null}
         {(isGalleryOrder || isGalleryInquiry) && order.galleryImageUrl ? <img src={order.galleryImageUrl} alt={order.categoryName} style={{ display: "block", width: "min(100%, 420px)", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} /> : null}
         {order.files.length ? (
           <div style={{ display: "grid", gap: 8 }}>
@@ -321,12 +324,12 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
       {!viewerIsAdmin && !isGalleryOrder && !isGalleryInquiry && order.status === "quoted" ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
           <button type="button" onClick={() => void handleDecline()} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Decline quote</button>
-          <button type="button" onClick={() => void handleCreateCheckout()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Pay quote</button>
+          <button type="button" onClick={() => void handleCreateCheckout()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{order.reviewDiscountAvailable && order.payableAmountCents !== null ? `Pay ${formatCurrency(order.payableAmountCents)}` : "Pay quote"}</button>
         </div>
       ) : null}
       {!viewerIsAdmin && isGalleryInquiry && order.quoteAmountCents !== null ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-          <button type="button" onClick={() => void handleCreateCheckout()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Buy artwork</button>
+          <button type="button" onClick={() => void handleCreateCheckout()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{order.reviewDiscountAvailable && order.payableAmountCents !== null ? `Buy for ${formatCurrency(order.payableAmountCents)}` : "Buy artwork"}</button>
         </div>
       ) : null}
       {!viewerIsAdmin && !isGalleryInquiry && order.status === "delivered" && !order.customerConfirmedAt ? (
