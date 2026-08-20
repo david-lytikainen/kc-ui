@@ -12,6 +12,17 @@ type ProfilePageProps = {
 
 
 const emptyDraft: GalleryDraft = { title: "", description: "", price: "" };
+const galleryCropAspectRatio = 4 / 3;
+const galleryCropExportWidth = 1600;
+const galleryCropExportHeight = 1200;
+
+type SelectedGalleryImage = {
+  file: File;
+  previewUrl: string;
+  cropX: number;
+  cropY: number;
+  zoom: number;
+};
 
 
 function getOrderKindLabel(orderKind: string) {
@@ -39,6 +50,71 @@ function getGalleryColumns() {
 }
 
 
+function revokeObjectUrls(images: SelectedGalleryImage[]) {
+  images.forEach((image) => {
+    if (image.previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(image.previewUrl);
+    }
+  });
+}
+
+
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Unable to load image for cropping."));
+    image.src = src;
+  });
+}
+
+
+async function cropGalleryImage(image: SelectedGalleryImage) {
+  const sourceImage = await loadImage(image.previewUrl);
+  const canvas = document.createElement("canvas");
+  canvas.width = galleryCropExportWidth;
+  canvas.height = galleryCropExportHeight;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Unable to prepare gallery image crop.");
+  }
+
+  const sourceAspectRatio = sourceImage.naturalWidth / sourceImage.naturalHeight;
+  const coverWidth = sourceAspectRatio > galleryCropAspectRatio
+    ? sourceImage.naturalHeight * galleryCropAspectRatio
+    : sourceImage.naturalWidth;
+  const coverHeight = sourceAspectRatio > galleryCropAspectRatio
+    ? sourceImage.naturalHeight
+    : sourceImage.naturalWidth / galleryCropAspectRatio;
+  const cropWidth = coverWidth / image.zoom;
+  const cropHeight = coverHeight / image.zoom;
+  const maxX = Math.max(0, sourceImage.naturalWidth - cropWidth);
+  const maxY = Math.max(0, sourceImage.naturalHeight - cropHeight);
+  const sourceX = (image.cropX / 100) * maxX;
+  const sourceY = (image.cropY / 100) * maxY;
+
+  context.drawImage(
+    sourceImage,
+    sourceX,
+    sourceY,
+    cropWidth,
+    cropHeight,
+    0,
+    0,
+    galleryCropExportWidth,
+    galleryCropExportHeight,
+  );
+
+  const fileType = image.file.type.startsWith("image/") ? image.file.type : "image/jpeg";
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, fileType, 0.92));
+  if (!blob) {
+    throw new Error("Unable to export cropped gallery image.");
+  }
+
+  return new File([blob], image.file.name, { type: fileType, lastModified: image.file.lastModified });
+}
+
+
 export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder, onLogout }: ProfilePageProps) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [galleryError, setGalleryError] = useState("");
@@ -49,7 +125,8 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
+  const [selectedImages, setSelectedImages] = useState<SelectedGalleryImage[]>([]);
+  const [activeCropIndex, setActiveCropIndex] = useState(0);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isSavingGallery, setIsSavingGallery] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -74,13 +151,9 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
 
   useEffect(() => {
     return () => {
-      previewUrls.forEach((previewUrl) => {
-        if (previewUrl.startsWith("blob:")) {
-          URL.revokeObjectURL(previewUrl);
-        }
-      });
+      revokeObjectUrls(selectedImages);
     };
-  }, [previewUrls]);
+  }, [selectedImages]);
 
   useEffect(() => {
     if (user.role !== "admin") {
@@ -130,16 +203,14 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   }, [ordersPage, token, user.role]);
 
   const isEditing = editingId !== null;
+  const activeSelectedImage = selectedImages[activeCropIndex] ?? null;
 
   const resetDraft = () => {
-    previewUrls.forEach((previewUrl) => {
-      if (previewUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    });
+    revokeObjectUrls(selectedImages);
     setDraft(emptyDraft);
     setEditingId(null);
-    setSelectedImageFiles([]);
+    setSelectedImages([]);
+    setActiveCropIndex(0);
     setPreviewUrls([]);
   };
 
@@ -157,15 +228,19 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
       event.target.value = "";
       return;
     }
-    previewUrls.forEach((previewUrl) => {
-      if (previewUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    });
+    revokeObjectUrls(selectedImages);
+    const nextSelectedImages = nextFiles.map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      cropX: 50,
+      cropY: 50,
+      zoom: 1,
+    }));
     setGalleryError("");
-    setGalleryMessage(`${nextFiles.length} image${nextFiles.length === 1 ? "" : "s"} ready to save.`);
-    setSelectedImageFiles(nextFiles);
-    setPreviewUrls(nextFiles.map((file) => URL.createObjectURL(file)));
+    setGalleryMessage(`${nextFiles.length} image${nextFiles.length === 1 ? "" : "s"} ready to crop and save.`);
+    setSelectedImages(nextSelectedImages);
+    setActiveCropIndex(0);
+    setPreviewUrls(nextSelectedImages.map((image) => image.previewUrl));
     event.target.value = "";
   };
 
@@ -182,13 +257,14 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
       setIsSavingGallery(true);
       setGalleryError("");
       setGalleryMessage("");
-      if (!selectedImageFiles.length && !isEditing) {
+      if (!selectedImages.length && !isEditing) {
         throw new Error("Choose at least one image before saving this gallery item.");
       }
+      const croppedFiles = selectedImages.length ? await Promise.all(selectedImages.map((image) => cropGalleryImage(image))) : [];
       if (isEditing && editingId !== null) {
-        await galleryApi.update(token, editingId, draft, selectedImageFiles);
+        await galleryApi.update(token, editingId, draft, croppedFiles);
       } else {
-        await galleryApi.create(token, draft, selectedImageFiles);
+        await galleryApi.create(token, draft, croppedFiles);
       }
       await refreshAdminItems();
       resetDraft();
@@ -319,7 +395,81 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                     <span>{isEditing ? "Replace artwork images" : "Artwork images"} (up to 5)</span>
                     <input type="file" accept="image/*" multiple onChange={handleUpload} />
                   </label>
-                  {previewUrls.length ? (
+                  {selectedImages.length ? (
+                    <div style={{ display: "grid", gap: 12, padding: 14, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.82)" }}>
+                      <div style={{ display: "grid", gap: 8 }}>
+                        <p style={{ margin: 0, color: "var(--text-dark)", fontWeight: 700 }}>Crop before save</p>
+                        <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>The saved image uses a fixed 4:3 crop so gallery cards and detail views stay consistent.</p>
+                      </div>
+                      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(72px, 96px))" }}>
+                        {selectedImages.map((image, index) => (
+                          <button key={image.previewUrl} type="button" onClick={() => setActiveCropIndex(index)} style={{ overflow: "hidden", border: index === activeCropIndex ? "2px solid var(--leaf-800)" : "1px solid var(--line)", borderRadius: 8, padding: 0, background: "var(--paper)" }}>
+                            <img src={image.previewUrl} alt={`Selected preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", background: "var(--linen)" }} />
+                          </button>
+                        ))}
+                      </div>
+                      {activeSelectedImage ? (
+                        <div style={{ display: "grid", gap: 12 }}>
+                          <div style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--linen)", aspectRatio: "4 / 3" }}>
+                            <img
+                              src={activeSelectedImage.previewUrl}
+                              alt="Crop preview"
+                              style={{
+                                display: "block",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                transform: `scale(${activeSelectedImage.zoom})`,
+                                transformOrigin: `${activeSelectedImage.cropX}% ${activeSelectedImage.cropY}%`,
+                              }}
+                            />
+                          </div>
+                          <label style={{ display: "grid", gap: 6, color: "var(--muted)" }}>
+                            <span>Zoom</span>
+                            <input
+                              type="range"
+                              min="1"
+                              max="3"
+                              step="0.05"
+                              value={activeSelectedImage.zoom}
+                              onChange={(event) => {
+                                const nextZoom = Number(event.target.value);
+                                setSelectedImages((current) => current.map((image, index) => index === activeCropIndex ? { ...image, zoom: nextZoom } : image));
+                              }}
+                            />
+                          </label>
+                          <label style={{ display: "grid", gap: 6, color: "var(--muted)" }}>
+                            <span>Horizontal crop</span>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="1"
+                              value={activeSelectedImage.cropX}
+                              onChange={(event) => {
+                                const nextCropX = Number(event.target.value);
+                                setSelectedImages((current) => current.map((image, index) => index === activeCropIndex ? { ...image, cropX: nextCropX } : image));
+                              }}
+                            />
+                          </label>
+                          <label style={{ display: "grid", gap: 6, color: "var(--muted)" }}>
+                            <span>Vertical crop</span>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="1"
+                              value={activeSelectedImage.cropY}
+                              onChange={(event) => {
+                                const nextCropY = Number(event.target.value);
+                                setSelectedImages((current) => current.map((image, index) => index === activeCropIndex ? { ...image, cropY: nextCropY } : image));
+                              }}
+                            />
+                          </label>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : previewUrls.length ? (
                     <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(96px, 1fr))" }}>
                       {previewUrls.map((previewUrl, index) => (
                         <img key={previewUrl} src={previewUrl} alt={`Selected preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} />
@@ -351,7 +501,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                             <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{isSavingOrder ? "Saving order..." : "Drag to reorder"}</p>
                           </div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
-                            <button type="button" onClick={() => { previewUrls.forEach((previewUrl) => { if (previewUrl.startsWith("blob:")) { URL.revokeObjectURL(previewUrl); } }); setEditingId(item.id); setDraft({ title: item.title, description: item.description, price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImageFiles([]); setPreviewUrls(item.images.map((image) => image.imageUrl)); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                            <button type="button" onClick={() => { revokeObjectUrls(selectedImages); setEditingId(item.id); setDraft({ title: item.title, description: item.description, price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImages([]); setActiveCropIndex(0); setPreviewUrls(item.images.map((image) => image.imageUrl)); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
                             {pendingDeleteId === item.id ? (
                               <>
                                 <button type="button" onClick={() => void handleDelete(item.id)} disabled={deletingId === item.id} style={{ border: "1px solid var(--danger)", borderRadius: 8, padding: "10px 12px", background: "var(--danger)", color: "var(--paper)", fontWeight: 800, opacity: deletingId === item.id ? 0.7 : 1 }}>{deletingId === item.id ? "Deleting..." : "Confirm delete"}</button>
