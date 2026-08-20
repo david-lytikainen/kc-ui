@@ -20,6 +20,7 @@ export type GalleryItem = {
   sourceImageUrl: string;
   s3Key: string | null;
   priceCents: number | null;
+  isSold: boolean;
   displayOrder: number;
   createdAt: string;
   updatedAt: string;

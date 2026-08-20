@@ -519,6 +519,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                           <span style={{ position: "absolute", top: 12, right: 12, color: "var(--leaf-700)", fontSize: "1rem", fontWeight: 700, letterSpacing: 1, cursor: "grab" }} aria-hidden="true">⋮⋮</span>
                           <div style={{ display: "grid", gap: 6, paddingRight: 24 }}>
                             <p style={{ margin: 0, fontWeight: 700 }}>{item.title}</p>
+                            {item.isSold ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>Sold</p> : null}
                             <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{isSavingOrder ? "Saving order..." : "Drag to reorder"}</p>
                           </div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
