@@ -172,11 +172,12 @@ export const galleryApi = {
     files.forEach((file) => formData.append("files", file));
     return request<GalleryItem>("/admin/gallery", { method: "POST", body: formData }, token);
   },
-  update: (token: string, itemId: number, payload: GalleryDraft, files: File[] = []) => {
+  update: (token: string, itemId: number, payload: GalleryDraft, files: File[] = [], existingImageIds: number[] = []) => {
     const formData = new FormData();
     formData.append("title", payload.title);
     formData.append("description", payload.description);
     formData.append("price_amount", payload.price);
+    existingImageIds.forEach((imageId) => formData.append("existing_image_ids", String(imageId)));
     files.forEach((file) => formData.append("files", file));
     return request<GalleryItem>(`/admin/gallery/${itemId}`, { method: "PATCH", body: formData }, token);
   },

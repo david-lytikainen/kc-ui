@@ -117,6 +117,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [editingImageIds, setEditingImageIds] = useState<number[]>([]);
   const [selectedImages, setSelectedImages] = useState<SelectedGalleryImage[]>([]);
   const [activeCropIndex, setActiveCropIndex] = useState(0);
   const [isSavingGallery, setIsSavingGallery] = useState(false);
@@ -196,11 +197,15 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   const isEditing = editingId !== null;
   const editingItem = editingId !== null ? items.find((item) => item.id === editingId) ?? null : null;
   const activeSelectedImage = selectedImages[activeCropIndex] ?? null;
+  const orderedEditingImages = editingItem
+    ? editingImageIds.map((imageId) => editingItem.images.find((image) => image.id === imageId)).filter((image): image is NonNullable<typeof image> => Boolean(image))
+    : [];
 
   const resetDraft = () => {
     revokeObjectUrls(selectedImages);
     setDraft(emptyDraft);
     setEditingId(null);
+    setEditingImageIds([]);
     setSelectedImages([]);
     setActiveCropIndex(0);
   };
@@ -252,7 +257,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
       }
       const croppedFiles = selectedImages.length ? await Promise.all(selectedImages.map((image) => cropGalleryImage(image))) : [];
       if (isEditing && editingId !== null) {
-        await galleryApi.update(token, editingId, draft, croppedFiles);
+        await galleryApi.update(token, editingId, draft, croppedFiles, editingImageIds);
       } else {
         await galleryApi.create(token, draft, croppedFiles);
       }
@@ -355,6 +360,22 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
 
   const totalPages = Math.max(1, Math.ceil(ordersTotal / 10));
   const editGalleryGridColumns = `repeat(${galleryColumns}, minmax(0, 1fr))`;
+
+  const moveEditingImage = (imageId: number, direction: -1 | 1) => {
+    setEditingImageIds((current) => {
+      const currentIndex = current.findIndex((id) => id === imageId);
+      const nextIndex = currentIndex + direction;
+      if (currentIndex === -1 || nextIndex < 0 || nextIndex >= current.length) {
+        return current;
+      }
+      const nextIds = [...current];
+      const [movedId] = nextIds.splice(currentIndex, 1);
+      nextIds.splice(nextIndex, 0, movedId);
+      return nextIds;
+    });
+    setGalleryMessage("");
+    setGalleryError("");
+  };
 
   return (
     <section style={{ display: "grid", gap: 16 }}>
@@ -459,11 +480,21 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                         </div>
                       ) : null}
                     </div>
-                  ) : editingItem?.images.length ? (
-                    <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(96px, 1fr))" }}>
-                      {editingItem.images.map((image, index) => (
-                        <img key={image.id} src={image.imageUrl} alt={`Selected preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} />
-                      ))}
+                  ) : orderedEditingImages.length ? (
+                    <div style={{ display: "grid", gap: 10 }}>
+                      <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>The first image is the cover image across the gallery and order pages.</p>
+                      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(132px, 1fr))" }}>
+                        {orderedEditingImages.map((image, index) => (
+                          <div key={image.id} style={{ display: "grid", gap: 8, padding: 10, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.82)" }}>
+                            <img src={image.imageUrl} alt={`Selected preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} />
+                            <p style={{ margin: 0, color: "var(--text-dark)", fontSize: "0.85rem", fontWeight: 700 }}>Image {index + 1}{index === 0 ? " (Cover)" : ""}</p>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button type="button" onClick={() => moveEditingImage(image.id, -1)} disabled={index === 0 || isSavingGallery} style={{ flex: 1, border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "8px 10px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800, opacity: index === 0 || isSavingGallery ? 0.5 : 1 }}>Up</button>
+                              <button type="button" onClick={() => moveEditingImage(image.id, 1)} disabled={index === orderedEditingImages.length - 1 || isSavingGallery} style={{ flex: 1, border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "8px 10px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800, opacity: index === orderedEditingImages.length - 1 || isSavingGallery ? 0.5 : 1 }}>Down</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ) : null}
                   {galleryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{galleryError}</p> : null}
@@ -491,7 +522,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                             <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{isSavingOrder ? "Saving order..." : "Drag to reorder"}</p>
                           </div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
-                            <button type="button" onClick={() => { revokeObjectUrls(selectedImages); setEditingId(item.id); setDraft({ title: item.title, description: item.description, price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImages([]); setActiveCropIndex(0); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                            <button type="button" onClick={() => { revokeObjectUrls(selectedImages); setEditingId(item.id); setEditingImageIds(item.images.map((image) => image.id)); setDraft({ title: item.title, description: item.description, price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImages([]); setActiveCropIndex(0); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
                             {pendingDeleteId === item.id ? (
                               <>
                                 <button type="button" onClick={() => void handleDelete(item.id)} disabled={deletingId === item.id} style={{ border: "1px solid var(--danger)", borderRadius: 8, padding: "10px 12px", background: "var(--danger)", color: "var(--paper)", fontWeight: 800, opacity: deletingId === item.id ? 0.7 : 1 }}>{deletingId === item.id ? "Deleting..." : "Confirm delete"}</button>
