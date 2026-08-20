@@ -68,6 +68,15 @@ export type OrderComment = {
   updatedAt: string;
 };
 
+export type OrderReview = {
+  id: number;
+  rating: number;
+  body: string;
+  discountAwarded: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Order = {
   orderKind: string;
   orderNumber: string;
@@ -98,6 +107,9 @@ export type Order = {
   viewerIsAdmin: boolean;
   files: OrderFile[];
   comments: OrderComment[];
+  review: OrderReview | null;
+  canLeaveReview: boolean;
+  reviewDiscountEligible: boolean;
 };
 
 export type OrderSummary = {
@@ -220,6 +232,7 @@ export const orderApi = {
   createGalleryInquiryCheckout: (orderNumber: string) => request<{ url: string }>(`/gallery-inquiries/${orderNumber}/checkout`, { method: "POST" }),
   confirmCheckout: (orderNumber: string, checkoutSessionId: string) => request<Order>(`/orders/${orderNumber}/confirm-payment`, { method: "POST", body: JSON.stringify({ checkoutSessionId }) }),
   confirmReceived: (orderNumber: string) => request<Order>(`/orders/${orderNumber}/confirm-received`, { method: "POST" }),
+  submitReview: (orderNumber: string, rating: number, body: string) => request<Order>(`/orders/${orderNumber}/review`, { method: "POST", body: JSON.stringify({ rating, body }) }),
   listAdmin: (token: string, page: number) => request<PaginatedOrders>(`/admin/orders?page=${page}&page_size=10`, { method: "GET" }, token),
   setQuote: (token: string, orderNumber: string, quoteAmount: string) => request<Order>(`/admin/orders/${orderNumber}/quote`, { method: "POST", body: JSON.stringify({ quoteAmount }) }, token),
   declineAdmin: (token: string, orderNumber: string) => request<Order>(`/admin/orders/${orderNumber}/decline`, { method: "POST" }, token),

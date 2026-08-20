@@ -28,6 +28,10 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
   const [editingBody, setEditingBody] = useState("");
   const [quoteAmount, setQuoteAmount] = useState("");
   const [isConfirmingReceived, setIsConfirmingReceived] = useState(false);
+  const [reviewRating, setReviewRating] = useState("5");
+  const [reviewBody, setReviewBody] = useState("");
+  const [reviewError, setReviewError] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const authToken = token || undefined;
 
   const viewerIsAdmin = Boolean(order?.viewerIsAdmin);
@@ -239,6 +243,29 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     }
   };
 
+  const handleReviewSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const nextBody = reviewBody.trim();
+    if (!nextBody) {
+      setReviewError("Review text is required.");
+      return;
+    }
+    try {
+      clearFeedback();
+      setReviewError("");
+      setIsSubmittingReview(true);
+      const nextOrder = await orderApi.submitReview(orderNumber, Number(reviewRating), nextBody);
+      applyOrder(nextOrder);
+      setReviewBody("");
+      setReviewRating("5");
+      setMessage(nextOrder.review?.discountAwarded ? "Review submitted. You earned 10% off your next purchase." : "Review submitted.");
+    } catch (nextError) {
+      setReviewError(nextError instanceof Error ? nextError.message : "Unable to submit review.");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   if (isLoading) {
     return <p style={{ margin: 0, color: "var(--muted)" }}>Loading order...</p>;
   }
@@ -367,6 +394,38 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
           <button type="submit" disabled={isSubmittingComment} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{isSubmittingComment ? "Posting..." : "Add comment"}</button>
         </form>
       </section> : null}
+
+      {!viewerIsAdmin && !isGalleryInquiry && order.status === "delivered" ? (
+        <section style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+          <p style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Leave a review</p>
+          {order.review ? (
+            <article style={{ display: "grid", gap: 8, padding: 12, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)" }}>
+              <p style={{ margin: 0, fontWeight: 700 }}>{"★".repeat(order.review.rating)}{"☆".repeat(5 - order.review.rating)}</p>
+              <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{order.review.body}</p>
+              {order.review.discountAwarded ? <p style={{ margin: 0, color: "var(--success)", fontSize: "0.9rem" }}>You earned 10% off your next purchase.</p> : null}
+            </article>
+          ) : order.canLeaveReview ? (
+            <form onSubmit={handleReviewSubmit} style={{ display: "grid", gap: 12 }}>
+              <p style={{ margin: 0, color: "var(--muted)" }}>
+                {order.reviewDiscountEligible ? "Leave a review to earn 10% off your next purchase." : "Leave a review about this order."}
+              </p>
+              <label style={{ display: "grid", gap: 6 }}>
+                <span style={{ color: "var(--muted)" }}>Stars</span>
+                <select value={reviewRating} onChange={(event) => setReviewRating(event.target.value)} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }}>
+                  <option value="5">5 stars</option>
+                  <option value="4">4 stars</option>
+                  <option value="3">3 stars</option>
+                  <option value="2">2 stars</option>
+                  <option value="1">1 star</option>
+                </select>
+              </label>
+              <textarea value={reviewBody} onChange={(event) => setReviewBody(event.target.value)} placeholder="Write your review" rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem", resize: "vertical" }} />
+              {reviewError ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.9rem" }}>{reviewError}</p> : null}
+              <button type="submit" disabled={isSubmittingReview} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{isSubmittingReview ? "Submitting..." : "Submit review"}</button>
+            </form>
+          ) : null}
+        </section>
+      ) : null}
 
       {error ? <p style={{ margin: 0, color: "var(--danger)" }}>{error}</p> : null}
       {message ? <p style={{ margin: 0, color: "var(--success)" }}>{message}</p> : null}
