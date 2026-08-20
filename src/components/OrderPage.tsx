@@ -1,14 +1,11 @@
-import { FormEvent, useEffect, useState } from "react";
-
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Order, orderApi } from "../api";
-
 
 type OrderPageProps = {
   orderNumber: string;
   token: string;
   onBackHome: () => void;
 };
-
 
 function formatCurrency(cents: number | null) {
   if (cents === null) {
@@ -17,7 +14,6 @@ function formatCurrency(cents: number | null) {
 
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 }
-
 
 export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageProps) {
   const [order, setOrder] = useState<Order | null>(null);
@@ -56,9 +52,9 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     setMessage("");
   };
 
-  const reloadOrder = async () => {
+  const reloadOrder = useCallback(async () => {
     applyOrder(await orderApi.get(orderNumber, authToken));
-  };
+  }, [authToken, orderNumber]);
 
   useEffect(() => {
     async function loadOrder() {
@@ -104,7 +100,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
       void reloadOrder();
     }, 3000);
     return () => window.clearTimeout(timeoutId);
-  }, [order?.paymentPending]);
+  }, [order?.paymentPending, reloadOrder]);
 
   useEffect(() => {
     if (!pendingEmailCommentIds.length) {
@@ -116,7 +112,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
     }, 1500);
 
     return () => window.clearTimeout(timeoutId);
-  }, [pendingEmailCommentIds, orderNumber]);
+  }, [pendingEmailCommentIds, reloadOrder]);
 
   const ownRole = viewerIsAdmin ? "admin" : "customer";
 

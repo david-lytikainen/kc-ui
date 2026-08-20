@@ -1,7 +1,6 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { Category, categoryApi, GalleryDraft, galleryApi, GalleryItem, orderApi, OrderSummary, User } from "../api";
 
-
 type ProfilePageProps = {
   token: string;
   user: User;
@@ -9,7 +8,6 @@ type ProfilePageProps = {
   onOpenOrder: (orderNumber: string) => void;
   onLogout: () => void;
 };
-
 
 const emptyDraft: GalleryDraft = { title: "", description: "", price: "" };
 const galleryCropAspectRatio = 4 / 3;
@@ -24,7 +22,6 @@ type SelectedGalleryImage = {
   zoom: number;
 };
 
-
 function getOrderKindLabel(orderKind: string) {
   if (orderKind === "gallery_inquiry") {
     return "Gallery inquiry";
@@ -34,7 +31,6 @@ function getOrderKindLabel(orderKind: string) {
   }
   return "Commission";
 }
-
 
 function getGalleryColumns() {
   if (typeof window === "undefined") {
@@ -49,7 +45,6 @@ function getGalleryColumns() {
   return 2;
 }
 
-
 function revokeObjectUrls(images: SelectedGalleryImage[]) {
   images.forEach((image) => {
     if (image.previewUrl.startsWith("blob:")) {
@@ -57,7 +52,6 @@ function revokeObjectUrls(images: SelectedGalleryImage[]) {
     }
   });
 }
-
 
 function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
@@ -67,7 +61,6 @@ function loadImage(src: string) {
     image.src = src;
   });
 }
-
 
 async function cropGalleryImage(image: SelectedGalleryImage) {
   const sourceImage = await loadImage(image.previewUrl);
@@ -114,7 +107,6 @@ async function cropGalleryImage(image: SelectedGalleryImage) {
   return new File([blob], image.file.name, { type: fileType, lastModified: image.file.lastModified });
 }
 
-
 export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder, onLogout }: ProfilePageProps) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [galleryError, setGalleryError] = useState("");
@@ -127,7 +119,6 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [selectedImages, setSelectedImages] = useState<SelectedGalleryImage[]>([]);
   const [activeCropIndex, setActiveCropIndex] = useState(0);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isSavingGallery, setIsSavingGallery] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryName, setCategoryName] = useState("");
@@ -203,6 +194,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   }, [ordersPage, token, user.role]);
 
   const isEditing = editingId !== null;
+  const editingItem = editingId !== null ? items.find((item) => item.id === editingId) ?? null : null;
   const activeSelectedImage = selectedImages[activeCropIndex] ?? null;
 
   const resetDraft = () => {
@@ -211,7 +203,6 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
     setEditingId(null);
     setSelectedImages([]);
     setActiveCropIndex(0);
-    setPreviewUrls([]);
   };
 
   const reloadCategories = async () => {
@@ -240,7 +231,6 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
     setGalleryMessage(`${nextFiles.length} image${nextFiles.length === 1 ? "" : "s"} ready to crop and save.`);
     setSelectedImages(nextSelectedImages);
     setActiveCropIndex(0);
-    setPreviewUrls(nextSelectedImages.map((image) => image.previewUrl));
     event.target.value = "";
   };
 
@@ -469,10 +459,10 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                         </div>
                       ) : null}
                     </div>
-                  ) : previewUrls.length ? (
+                  ) : editingItem?.images.length ? (
                     <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(96px, 1fr))" }}>
-                      {previewUrls.map((previewUrl, index) => (
-                        <img key={previewUrl} src={previewUrl} alt={`Selected preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} />
+                      {editingItem.images.map((image, index) => (
+                        <img key={image.id} src={image.imageUrl} alt={`Selected preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} />
                       ))}
                     </div>
                   ) : null}
@@ -501,7 +491,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                             <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{isSavingOrder ? "Saving order..." : "Drag to reorder"}</p>
                           </div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
-                            <button type="button" onClick={() => { revokeObjectUrls(selectedImages); setEditingId(item.id); setDraft({ title: item.title, description: item.description, price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImages([]); setActiveCropIndex(0); setPreviewUrls(item.images.map((image) => image.imageUrl)); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                            <button type="button" onClick={() => { revokeObjectUrls(selectedImages); setEditingId(item.id); setDraft({ title: item.title, description: item.description, price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImages([]); setActiveCropIndex(0); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
                             {pendingDeleteId === item.id ? (
                               <>
                                 <button type="button" onClick={() => void handleDelete(item.id)} disabled={deletingId === item.id} style={{ border: "1px solid var(--danger)", borderRadius: 8, padding: "10px 12px", background: "var(--danger)", color: "var(--paper)", fontWeight: 800, opacity: deletingId === item.id ? 0.7 : 1 }}>{deletingId === item.id ? "Deleting..." : "Confirm delete"}</button>
