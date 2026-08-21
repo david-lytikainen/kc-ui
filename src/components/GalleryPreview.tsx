@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { galleryApi, GalleryItem } from "../api";
+import GalleryCheckoutForm from "./GalleryCheckoutForm";
 import { normalizeEmailInput } from "../inputFormatting";
 
 
@@ -173,14 +174,7 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
                   </div>
                 ) : null}
                 {checkoutItemId === item.id ? (
-                  <div style={{ display: "grid", gap: 8 }}>
-                    <input value={checkoutEmail} onChange={(event) => setCheckoutEmail(normalizeEmailInput(event.target.value))} placeholder="Email for checkout" type="email" autoCapitalize="none" autoCorrect="off" inputMode="email" style={{ width: "100%", padding: 12, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "0.95rem" }} />
-                    <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>If this email has an unused 10% review reward, it will apply automatically at checkout.</p>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                      <button type="button" onClick={() => void handleBuy(item.id)} disabled={isStartingCheckout} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>{isStartingCheckout ? "Starting..." : "Start checkout"}</button>
-                      <button type="button" onClick={() => { setCheckoutItemId(null); setCheckoutEmail(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel</button>
-                    </div>
-                  </div>
+                  <GalleryCheckoutForm email={checkoutEmail} isStartingCheckout={isStartingCheckout} onEmailChange={(value) => setCheckoutEmail(normalizeEmailInput(value))} onStartCheckout={() => void handleBuy(item.id)} onCancel={() => { setCheckoutItemId(null); setCheckoutEmail(""); }} />
                 ) : null}
                 {inquiryItemId === item.id ? (
                   <div style={{ display: "grid", gap: 8 }}>

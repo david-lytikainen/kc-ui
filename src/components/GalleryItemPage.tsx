@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { galleryApi, GalleryItem } from "../api";
+import GalleryCheckoutForm from "./GalleryCheckoutForm";
 import { normalizeEmailInput } from "../inputFormatting";
 
 
@@ -155,11 +156,7 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
 
             {item.priceCents !== null ? (
               <div style={{ display: "grid", gap: 8, maxWidth: 420 }}>
-                <input value={checkoutEmail} onChange={(event) => setCheckoutEmail(normalizeEmailInput(event.target.value))} placeholder="Email for checkout" type="email" autoCapitalize="none" autoCorrect="off" inputMode="email" style={{ width: "100%", padding: 12, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "0.95rem" }} />
-                <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>If this email has an unused 10% review reward, it will apply automatically at checkout.</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-                  <button type="button" onClick={() => void handleBuy()} disabled={isStartingCheckout} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "12px 14px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>{isStartingCheckout ? "Starting..." : "Buy"}</button>
-                </div>
+                <GalleryCheckoutForm email={checkoutEmail} isStartingCheckout={isStartingCheckout} onEmailChange={(value) => setCheckoutEmail(normalizeEmailInput(value))} onStartCheckout={() => void handleBuy()} submitLabel="Buy" />
               </div>
             ) : null}
 
