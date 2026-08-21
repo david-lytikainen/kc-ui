@@ -299,7 +299,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
         <p style={{ margin: 0 }}>{isGalleryOrder || isGalleryInquiry ? "Amount" : "Quote"}: {formatCurrency(order.quoteAmountCents)}</p>
         {order.appliedReviewDiscountCents > 0 ? <p style={{ margin: 0, color: "var(--success)" }}>Review discount: -{formatCurrency(order.appliedReviewDiscountCents)}</p> : null}
         {order.payableAmountCents !== null ? <p style={{ margin: 0, fontWeight: 700 }}>{order.paymentPending || order.status === "accepted" || order.status === "in_progress" || order.status === "shipped" || order.status === "delivered" ? "Paid total" : "Total due"}: {formatCurrency(order.payableAmountCents)}</p> : null}
-        {order.reviewDiscountAvailable && !viewerIsAdmin && (order.status === "quoted" || isGalleryInquiry) ? <p style={{ margin: 0, color: "var(--muted)" }}>Your unused 10% review reward will apply automatically at checkout.</p> : null}
+        {order.reviewDiscountAvailable && !viewerIsAdmin && (order.status === "quoted" || isGalleryInquiry) ? <p style={{ margin: 0, color: "var(--success)", fontSize: "0.95rem" }}>Your unused 10% review reward will apply automatically. Stripe Checkout will also show that the discount is already applied.</p> : null}
         {(isGalleryOrder || isGalleryInquiry) && order.galleryImageUrl ? <img src={order.galleryImageUrl} alt={order.categoryName} style={{ display: "block", width: "min(100%, 420px)", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} /> : null}
         {order.files.length ? (
           <div style={{ display: "grid", gap: 8 }}>
