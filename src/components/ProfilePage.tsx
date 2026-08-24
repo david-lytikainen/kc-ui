@@ -239,9 +239,8 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
     event.target.value = "";
   };
 
-  const refreshAdminItems = async () => {
-    const nextItems = await galleryApi.listAdmin(token);
-    setItems(nextItems);
+  const refreshAdminItems = async (nextItems?: GalleryItem[]) => {
+    setItems(nextItems ?? await galleryApi.listAdmin(token));
     setPendingDeleteId(null);
     onGalleryChanged();
   };
@@ -289,13 +288,13 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
     }
   };
 
-  const saveOrder = async (orderedIds: number[]) => {
+  const saveOrder = async (orderedItems: GalleryItem[]) => {
     try {
       setIsSavingOrder(true);
       setGalleryError("");
       setGalleryMessage("");
-      await galleryApi.reorder(token, orderedIds);
-      await refreshAdminItems();
+      await galleryApi.reorder(token, orderedItems.map((item) => item.id));
+      await refreshAdminItems(orderedItems.map((item, index) => ({ ...item, displayOrder: (index + 1) * 10 })));
       setGalleryMessage("Gallery order saved.");
     } catch (nextError) {
       setGalleryError(nextError instanceof Error ? nextError.message : "Unable to save order.");
@@ -320,7 +319,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
     nextItems.splice(toIndex, 0, movedItem);
     setItems(nextItems);
     setDraggingId(null);
-    await saveOrder(nextItems.map((item) => item.id));
+    await saveOrder(nextItems);
   };
 
   const handleCategorySubmit = async (event: FormEvent<HTMLFormElement>) => {
