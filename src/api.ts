@@ -119,6 +119,7 @@ export type OrderSummary = {
   orderNumber: string;
   orderKind: string;
   customerName: string;
+  customerEmail: string;
   categoryName: string;
   status: string;
   amountCents: number | null;

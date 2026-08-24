@@ -60,20 +60,6 @@ function formatRelativeAge(value: string) {
   return createdAt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function formatCreatedDate(value: string) {
-  const createdAt = new Date(value);
-  if (Number.isNaN(createdAt.getTime())) {
-    return "";
-  }
-  return createdAt.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 function getGalleryColumns() {
   if (typeof window === "undefined") {
     return 2;
@@ -632,9 +618,9 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                       </div>
                       <p style={{ margin: 0, color: "var(--leaf-700)", fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>{getOrderKindLabel(order.orderKind)}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>{order.customerName} · {order.categoryName}</p>
+                      <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{order.customerEmail}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>Status: {order.status}</p>
                       {order.amountCents !== null ? <p style={{ margin: 0, color: "var(--muted)" }}>Amount: {(order.amountCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}</p> : null}
-                      <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.82rem" }}>Created {formatCreatedDate(order.createdAt)}</p>
                       {order.canOpen ? <button type="button" onClick={() => onOpenOrder(order.orderNumber)} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>Open order</button> : null}
                     </article>
                   ))}
