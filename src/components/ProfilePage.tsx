@@ -608,6 +608,9 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
                         <p style={{ margin: 0, fontWeight: 700 }}>Order {order.orderNumber}</p>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 28, padding: "0 10px", border: "1px solid rgba(31, 51, 40, 0.16)", borderRadius: 999, background: "rgba(255, 253, 248, 0.92)", color: "var(--text-dark)", fontSize: "0.78rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+                            {getOrderKindLabel(order.orderKind)}
+                          </span>
                           <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.82rem", whiteSpace: "nowrap" }}>{formatRelativeAge(order.createdAt)}</p>
                           {order.customerConfirmedAt ? (
                             <span title="Customer confirmed receipt" aria-label="Customer confirmed receipt" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 28, height: 28, borderRadius: 999, background: "rgba(47, 133, 90, 0.16)", color: "var(--success)", fontWeight: 900 }}>
@@ -616,7 +619,6 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                           ) : null}
                         </div>
                       </div>
-                      <p style={{ margin: 0, color: "var(--leaf-700)", fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>{getOrderKindLabel(order.orderKind)}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>{order.customerName} · {order.categoryName}</p>
                       <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{order.customerEmail}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>Status: {order.status}</p>
