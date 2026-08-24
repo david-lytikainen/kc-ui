@@ -32,6 +32,48 @@ function getOrderKindLabel(orderKind: string) {
   return "Commission";
 }
 
+function formatRelativeAge(value: string) {
+  const createdAt = new Date(value);
+  const createdAtTime = createdAt.getTime();
+  if (Number.isNaN(createdAtTime)) {
+    return "";
+  }
+
+  const diffMs = Date.now() - createdAtTime;
+  if (diffMs < 60 * 1000) {
+    return "just now";
+  }
+
+  const minuteMs = 60 * 1000;
+  const hourMs = 60 * minuteMs;
+  const dayMs = 24 * hourMs;
+
+  if (diffMs < hourMs) {
+    return `${Math.floor(diffMs / minuteMs)}m ago`;
+  }
+  if (diffMs < dayMs) {
+    return `${Math.floor(diffMs / hourMs)}h ago`;
+  }
+  if (diffMs < 7 * dayMs) {
+    return `${Math.floor(diffMs / dayMs)}d ago`;
+  }
+  return createdAt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function formatCreatedDate(value: string) {
+  const createdAt = new Date(value);
+  if (Number.isNaN(createdAt.getTime())) {
+    return "";
+  }
+  return createdAt.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 function getGalleryColumns() {
   if (typeof window === "undefined") {
     return 2;
@@ -579,16 +621,20 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                     <article key={order.orderNumber} style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
                         <p style={{ margin: 0, fontWeight: 700 }}>Order {order.orderNumber}</p>
-                        {order.customerConfirmedAt ? (
-                          <span title="Customer confirmed receipt" aria-label="Customer confirmed receipt" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 28, height: 28, borderRadius: 999, background: "rgba(47, 133, 90, 0.16)", color: "var(--success)", fontWeight: 900 }}>
-                            ✓
-                          </span>
-                        ) : null}
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
+                          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.82rem", whiteSpace: "nowrap" }}>{formatRelativeAge(order.createdAt)}</p>
+                          {order.customerConfirmedAt ? (
+                            <span title="Customer confirmed receipt" aria-label="Customer confirmed receipt" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 28, height: 28, borderRadius: 999, background: "rgba(47, 133, 90, 0.16)", color: "var(--success)", fontWeight: 900 }}>
+                              ✓
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                       <p style={{ margin: 0, color: "var(--leaf-700)", fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>{getOrderKindLabel(order.orderKind)}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>{order.customerName} · {order.categoryName}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>Status: {order.status}</p>
                       {order.amountCents !== null ? <p style={{ margin: 0, color: "var(--muted)" }}>Amount: {(order.amountCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}</p> : null}
+                      <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.82rem" }}>Created {formatCreatedDate(order.createdAt)}</p>
                       {order.canOpen ? <button type="button" onClick={() => onOpenOrder(order.orderNumber)} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>Open order</button> : null}
                     </article>
                   ))}
