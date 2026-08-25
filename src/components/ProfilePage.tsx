@@ -23,13 +23,7 @@ type SelectedGalleryImage = {
 };
 
 function getOrderKindLabel(orderKind: string) {
-  if (orderKind === "gallery_inquiry") {
-    return "Gallery inquiry";
-  }
-  if (orderKind === "gallery") {
-    return "Gallery order";
-  }
-  return "Commission";
+  return { gallery: "Gallery order", gallery_inquiry: "Gallery inquiry" }[orderKind] ?? "Commission";
 }
 
 function formatRelativeAge(value: string) {
