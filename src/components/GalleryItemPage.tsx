@@ -138,13 +138,15 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
                 </div>
               ) : null}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(64px, 84px))", gap: 10 }}>
-              {item.images.map((image, index) => (
-                <button key={image.id} type="button" onClick={() => setActiveImageIndex(index)} style={{ overflow: "hidden", border: index === activeImageIndex ? "2px solid var(--leaf-800)" : "1px solid var(--line)", borderRadius: 8, padding: 0, background: "var(--bg-panel)" }}>
-                  <img src={image.imageUrl} alt={`${item.title} preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "contain", background: "var(--linen)" }} />
-                </button>
-              ))}
-            </div>
+            {item.images.length > 1 ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(64px, 84px))", gap: 10 }}>
+                {item.images.map((image, index) => (
+                  <button key={image.id} type="button" onClick={() => setActiveImageIndex(index)} style={{ overflow: "hidden", border: index === activeImageIndex ? "2px solid var(--leaf-800)" : "1px solid var(--line)", borderRadius: 8, padding: 0, background: "var(--bg-panel)" }}>
+                    <img src={image.imageUrl} alt={`${item.title} preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", background: "var(--linen)" }} />
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <div style={{ display: "grid", gap: 12 }}>
