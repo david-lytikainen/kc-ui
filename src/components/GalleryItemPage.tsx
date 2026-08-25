@@ -110,10 +110,10 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
       {!isLoading && !error && item ? (
         <div style={{ display: "grid", gap: 16 }}>
           <div style={{ display: "grid", gap: 12 }}>
-            <div style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-gallery-item)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+            <div style={{ justifySelf: "start", width: "fit-content", maxWidth: "100%", overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-gallery-item)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
               {activeImage ? (
                 <div
-                  style={{ overflow: "hidden", cursor: "zoom-in" }}
+                  style={{ display: "grid", placeItems: "center", width: "fit-content", maxWidth: "100%", overflow: "hidden", cursor: "zoom-in", minHeight: 240, maxHeight: "70vh", padding: 12 }}
                   onMouseMove={(event) => {
                     const bounds = event.currentTarget.getBoundingClientRect();
                     const x = ((event.clientX - bounds.left) / bounds.width) * 100;
@@ -127,7 +127,7 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
                   <img
                     src={activeImage.imageUrl}
                     alt={item.title}
-                    style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "var(--linen)", transition: "transform 220ms ease", transformOrigin: zoomOrigin }}
+                    style={{ display: "block", width: "auto", maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", background: "var(--linen)", transition: "transform 220ms ease", transformOrigin: zoomOrigin }}
                     onMouseEnter={(event) => {
                       event.currentTarget.style.transform = "scale(1.9)";
                     }}
@@ -141,7 +141,7 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(64px, 84px))", gap: 10 }}>
               {item.images.map((image, index) => (
                 <button key={image.id} type="button" onClick={() => setActiveImageIndex(index)} style={{ overflow: "hidden", border: index === activeImageIndex ? "2px solid var(--leaf-800)" : "1px solid var(--line)", borderRadius: 8, padding: 0, background: "var(--bg-panel)" }}>
-                  <img src={image.imageUrl} alt={`${item.title} preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", background: "var(--linen)" }} />
+                  <img src={image.imageUrl} alt={`${item.title} preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "contain", background: "var(--linen)" }} />
                 </button>
               ))}
             </div>

@@ -57,11 +57,12 @@ export default function App() {
     if (!storedToken) {
       return;
     }
+    const sessionToken = storedToken;
 
     async function hydrateSession() {
       try {
-        const nextUser = await authApi.validateToken(storedToken);
-        setToken(storedToken);
+        const nextUser = await authApi.validateToken(sessionToken);
+        setToken(sessionToken);
         setUser(nextUser);
       } catch (nextError) {
         localStorage.removeItem("token");
