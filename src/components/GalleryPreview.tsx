@@ -33,7 +33,6 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
   const [inquiryBody, setInquiryBody] = useState("");
   const [isSendingInquiry, setIsSendingInquiry] = useState(false);
   const [checkoutItemId, setCheckoutItemId] = useState<number | null>(null);
-  const [checkoutEmail, setCheckoutEmail] = useState("");
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
 
   const formatCurrency = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
@@ -49,12 +48,7 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
     try {
       setIsStartingCheckout(true);
       setError("");
-      const customerEmail = normalizeEmailInput(checkoutEmail);
-      if (!customerEmail) {
-        setError("Email is required to start checkout.");
-        return;
-      }
-      const response = await galleryApi.createCheckout(itemId, customerEmail);
+      const response = await galleryApi.createCheckout(itemId);
       window.location.href = response.url;
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to start checkout.");
@@ -174,7 +168,7 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
                   </div>
                 ) : null}
                 {checkoutItemId === item.id ? (
-                  <GalleryCheckoutForm email={checkoutEmail} isStartingCheckout={isStartingCheckout} onEmailChange={(value) => setCheckoutEmail(normalizeEmailInput(value))} onStartCheckout={() => void handleBuy(item.id)} onCancel={() => { setCheckoutItemId(null); setCheckoutEmail(""); }} />
+                  <GalleryCheckoutForm isStartingCheckout={isStartingCheckout} onStartCheckout={() => void handleBuy(item.id)} onCancel={() => setCheckoutItemId(null)} />
                 ) : null}
                 {inquiryItemId === item.id ? (
                   <div style={{ display: "grid", gap: 8 }}>

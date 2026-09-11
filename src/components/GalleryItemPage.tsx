@@ -20,7 +20,6 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
   const [inquiryEmail, setInquiryEmail] = useState("");
   const [inquiryBody, setInquiryBody] = useState("");
   const [isSendingInquiry, setIsSendingInquiry] = useState(false);
-  const [checkoutEmail, setCheckoutEmail] = useState("");
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
 
@@ -34,12 +33,7 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
     try {
       setIsStartingCheckout(true);
       setError("");
-      const customerEmail = normalizeEmailInput(checkoutEmail);
-      if (!customerEmail) {
-        setError("Email is required to start checkout.");
-        return;
-      }
-      const response = await galleryApi.createCheckout(item.id, customerEmail);
+      const response = await galleryApi.createCheckout(item.id);
       window.location.href = response.url;
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to start checkout.");
@@ -158,7 +152,7 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
 
             {item.priceCents !== null ? (
               <div style={{ display: "grid", gap: 8, maxWidth: 420 }}>
-                <GalleryCheckoutForm email={checkoutEmail} isStartingCheckout={isStartingCheckout} onEmailChange={(value) => setCheckoutEmail(normalizeEmailInput(value))} onStartCheckout={() => void handleBuy()} submitLabel="Buy" />
+                <GalleryCheckoutForm isStartingCheckout={isStartingCheckout} onStartCheckout={() => void handleBuy()} submitLabel="Buy" />
               </div>
             ) : null}
 
