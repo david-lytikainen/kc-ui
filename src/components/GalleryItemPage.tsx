@@ -97,17 +97,18 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
   }, [itemId]);
 
   return (
-    <section style={{ display: "grid", gap: 18 }}>
-      <button type="button" onClick={onBackToGallery} style={{ justifySelf: "start", border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Back to gallery</button>
-      {isLoading ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading gallery item...</p> : null}
-      {error ? <p style={{ margin: 0, color: "var(--danger)" }}>{error}</p> : null}
+    <section className="d-grid gap-4">
+      <button className="btn btn-outline-secondary" type="button" onClick={onBackToGallery}>Back to gallery</button>
+      {isLoading ? <p className="text-muted">Loading gallery item...</p> : null}
+      {error ? <p className="text-danger">{error}</p> : null}
       {!isLoading && !error && item ? (
-        <div style={{ display: "grid", gap: 16 }}>
-          <div style={{ display: "grid", gap: 12 }}>
-            <div style={{ justifySelf: "start", width: "fit-content", maxWidth: "100%", overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-gallery-item)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+        <div className="row g-4">
+          <div className="col-12 col-lg-7 d-grid gap-3">
+            <div className="card p-2 d-inline-block mw-100 overflow-hidden">
               {activeImage ? (
                 <div
-                  style={{ display: "grid", placeItems: "center", width: "fit-content", maxWidth: "100%", overflow: "hidden", cursor: "zoom-in", minHeight: 240, maxHeight: "70vh", padding: 12 }}
+                  className="d-flex justify-content-center align-items-center d-inline-block mw-100 overflow-hidden p-2"
+                  style={{ cursor: "zoom-in", minHeight: 240, maxHeight: "70vh" }}
                   onMouseMove={(event) => {
                     const bounds = event.currentTarget.getBoundingClientRect();
                     const x = ((event.clientX - bounds.left) / bounds.width) * 100;
@@ -121,7 +122,8 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
                   <img
                     src={activeImage.imageUrl}
                     alt={item.title}
-                    style={{ display: "block", width: "auto", maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", background: "var(--linen)", transition: "transform 220ms ease", transformOrigin: zoomOrigin }}
+                    className="d-block mw-100"
+                    style={{ width: "auto", maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", background: "var(--linen)", transition: "transform 220ms ease", transformOrigin: zoomOrigin }}
                     onMouseEnter={(event) => {
                       event.currentTarget.style.transform = "scale(1.9)";
                     }}
@@ -133,36 +135,36 @@ export default function GalleryItemPage({ itemId, onBackToGallery, onOpenOrder }
               ) : null}
             </div>
             {item.images.length > 1 ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(64px, 84px))", gap: 10 }}>
+              <div className="d-flex flex-wrap gap-2">
                 {item.images.map((image, index) => (
-                  <button key={image.id} type="button" onClick={() => setActiveImageIndex(index)} style={{ overflow: "hidden", border: index === activeImageIndex ? "2px solid var(--leaf-800)" : "1px solid var(--line)", borderRadius: 8, padding: 0, background: "var(--bg-panel)" }}>
-                    <img src={image.imageUrl} alt={`${item.title} preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", background: "var(--linen)" }} />
+                  <button key={image.id} className={`thumbnail-button ${index === activeImageIndex ? "active" : ""}`} type="button" onClick={() => setActiveImageIndex(index)}>
+                    <img className="thumbnail-image" src={image.imageUrl} alt={`${item.title} preview ${index + 1}`} />
                   </button>
                 ))}
               </div>
             ) : null}
           </div>
 
-          <div style={{ display: "grid", gap: 12 }}>
-            <div style={{ display: "grid", gap: 8 }}>
-              <h2 style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontSize: "clamp(1.8rem, 5vw, 2.6rem)", fontWeight: 500 }}>{item.title}</h2>
-              <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.6 }}>{item.description}</p>
-              {item.priceCents !== null ? <p style={{ margin: 0, color: "var(--text-dark)", fontSize: "1.05rem", fontWeight: 700 }}>{formatCurrency(item.priceCents)}</p> : null}
+          <div className="col-12 col-lg-5 d-grid gap-3 align-content-start">
+            <div className="d-grid gap-2">
+              <h2 className="h2 mb-0">{item.title}</h2>
+              <p className="text-muted lh-lg">{item.description}</p>
+              {item.priceCents !== null ? <p className="fw-bold">{formatCurrency(item.priceCents)}</p> : null}
             </div>
 
             {item.priceCents !== null ? (
-              <div style={{ display: "grid", gap: 8, maxWidth: 420 }}>
+              <div className="d-grid gap-2" style={{ maxWidth: 420 }}>
                 <GalleryCheckoutForm isStartingCheckout={isStartingCheckout} onStartCheckout={() => void handleBuy()} submitLabel="Buy" />
               </div>
             ) : null}
 
             {item.priceCents !== null ? (
-              <div style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-                <p style={{ margin: 0, fontWeight: 700 }}>Ask a question</p>
-                <input value={inquiryEmail} onChange={(event) => setInquiryEmail(normalizeEmailInput(event.target.value))} placeholder="Your email" type="email" autoCapitalize="none" autoCorrect="off" inputMode="email" style={{ width: "100%", padding: 12, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "0.95rem" }} />
-                <textarea value={inquiryBody} onChange={(event) => setInquiryBody(event.target.value)} placeholder="Ask a question" rows={4} style={{ width: "100%", padding: 12, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "0.95rem", resize: "vertical" }} />
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-                  <button type="button" onClick={() => void handleInquiry()} disabled={isSendingInquiry} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "12px 14px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, opacity: isSendingInquiry ? 0.7 : 1 }}>{isSendingInquiry ? "Sending..." : "Send question"}</button>
+              <div className="card p-3 d-grid gap-2">
+                <p className="fw-bold mb-0">Ask a question</p>
+                <input className="form-control" value={inquiryEmail} onChange={(event) => setInquiryEmail(normalizeEmailInput(event.target.value))} placeholder="Your email" type="email" autoCapitalize="none" autoCorrect="off" inputMode="email" />
+                <textarea className="form-control" value={inquiryBody} onChange={(event) => setInquiryBody(event.target.value)} placeholder="Ask a question" rows={4} />
+                <div className="d-flex flex-wrap gap-2 align-items-center">
+                  <button className="btn btn-primary" type="button" onClick={() => void handleInquiry()} disabled={isSendingInquiry}>{isSendingInquiry ? "Sending..." : "Send question"}</button>
                 </div>
               </div>
             ) : null}

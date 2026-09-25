@@ -267,20 +267,20 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
   };
 
   if (isLoading) {
-    return <p style={{ margin: 0, color: "var(--muted)" }}>Loading order...</p>;
+    return <p className="text-muted">Loading order...</p>;
   }
 
   if (!order) {
-    return <p style={{ margin: 0, color: "var(--danger)" }}>Order not found.</p>;
+    return <p className="text-danger">Order not found.</p>;
   }
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <button type="button" onClick={onBackHome} style={{ justifySelf: "start", border: 0, background: "transparent", color: "var(--text-dark)", padding: 0, fontWeight: 700 }}>Back home</button>
-      <div style={{ display: "grid", gap: 8, maxWidth: 680 }}>
-        <p style={{ margin: 0, color: "var(--leaf-700)", fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase" }}>Order {order.orderNumber}</p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-          <h2 style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontSize: "clamp(1.6rem, 4vw, 2.2rem)", fontWeight: 500 }}>{order.customerName}</h2>
+    <section className="d-grid gap-4">
+      <button className="btn btn-link p-0 text-start" type="button" onClick={onBackHome}>Back home</button>
+      <div>
+        <p className="text-uppercase small fw-bold text-success">Order {order.orderNumber}</p>
+        <div className="d-flex flex-wrap gap-2 align-items-center">
+          <h2 className="h2 mb-0">{order.customerName}</h2>
           {order.customerConfirmedAt ? (
             <span title="Customer confirmed receipt" aria-label="Customer confirmed receipt" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 28, height: 28, borderRadius: 999, background: "rgba(47, 133, 90, 0.16)", color: "var(--success)", fontWeight: 900 }}>
               ✓
@@ -288,8 +288,8 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
           ) : null}
         </div>
       </div>
-      <div style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-        <p style={{ margin: 0 }}>Status: <strong>{order.status}</strong></p>
+      <div className="card p-3 d-grid gap-2">
+        <p className="mb-0">Status: <strong>{order.status}</strong></p>
         <p style={{ margin: 0 }}>{isGalleryOrder || isGalleryInquiry ? "Artwork" : "Service"}: {order.categoryName}</p>
         {!isGalleryInquiry ? <p style={{ margin: 0 }}>Email: {order.customerEmail}</p> : null}
         {!isGalleryOrder && !isGalleryInquiry ? <p style={{ margin: 0 }}>Phone: {order.customerPhone}</p> : null}
@@ -300,7 +300,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
         {order.appliedReviewDiscountCents > 0 ? <p style={{ margin: 0, color: "var(--success)" }}>Review discount: -{formatCurrency(order.appliedReviewDiscountCents)}</p> : null}
         {order.payableAmountCents !== null ? <p style={{ margin: 0, fontWeight: 700 }}>{order.paymentPending || order.status === "accepted" || order.status === "in_progress" || order.status === "shipped" || order.status === "delivered" ? "Paid total" : "Total due"}: {formatCurrency(order.payableAmountCents)}</p> : null}
         {!viewerIsAdmin && (order.status === "quoted" || isGalleryInquiry) ? <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.95rem" }}>Enter a 10% review reward code in Stripe Checkout when you have one.</p> : null}
-        {(isGalleryOrder || isGalleryInquiry) && order.galleryImageUrl ? <img src={order.galleryImageUrl} alt={order.categoryName} style={{ display: "block", width: "min(100%, 420px)", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} /> : null}
+        {(isGalleryOrder || isGalleryInquiry) && order.galleryImageUrl ? <img className="gallery-cover" src={order.galleryImageUrl} alt={order.categoryName} style={{ maxWidth: 420 }} /> : null}
         {order.files.length ? (
           <div style={{ display: "grid", gap: 8 }}>
             <p style={{ margin: 0, fontWeight: 700 }}>{isGalleryOrder || isGalleryInquiry ? "Artwork" : "Reference images"}</p>
@@ -322,26 +322,26 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
       </div>
 
       {!viewerIsAdmin && !isGalleryOrder && !isGalleryInquiry && order.status === "quoted" ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-          <button type="button" onClick={() => void handleDecline()} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Decline quote</button>
-          <button type="button" onClick={() => void handleCreateCheckout()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Pay quote</button>
+        <div className="d-flex flex-wrap gap-2">
+          <button className="btn btn-outline-danger" type="button" onClick={() => void handleDecline()}>Decline quote</button>
+          <button className="btn btn-primary" type="button" onClick={() => void handleCreateCheckout()}>Pay quote</button>
         </div>
       ) : null}
       {!viewerIsAdmin && isGalleryInquiry && order.quoteAmountCents !== null ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-          <button type="button" onClick={() => void handleCreateCheckout()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Buy artwork</button>
+        <div className="d-flex flex-wrap gap-2">
+          <button className="btn btn-primary" type="button" onClick={() => void handleCreateCheckout()}>Buy artwork</button>
         </div>
       ) : null}
       {!viewerIsAdmin && !isGalleryInquiry && order.status === "delivered" && !order.customerConfirmedAt ? (
-        <div style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-          <p style={{ margin: 0, fontWeight: 700 }}>Did you receive this order?</p>
+        <div className="card p-3 d-grid gap-3">
+          <p className="fw-bold mb-0">Did you receive this order?</p>
           {isConfirmingReceived ? (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-              <button type="button" onClick={() => void handleConfirmReceived()} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Yes, confirm</button>
-              <button type="button" onClick={() => setIsConfirmingReceived(false)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>No</button>
+            <div className="d-flex flex-wrap gap-2">
+              <button className="btn btn-primary" type="button" onClick={() => void handleConfirmReceived()}>Yes, confirm</button>
+              <button className="btn btn-outline-secondary" type="button" onClick={() => setIsConfirmingReceived(false)}>No</button>
             </div>
           ) : (
-            <button type="button" onClick={() => setIsConfirmingReceived(true)} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Confirm received</button>
+            <button className="btn btn-primary" type="button" onClick={() => setIsConfirmingReceived(true)}>Confirm received</button>
           )}
         </div>
       ) : null}

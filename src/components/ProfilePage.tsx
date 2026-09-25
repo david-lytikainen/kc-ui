@@ -47,19 +47,6 @@ function formatRelativeAge(value: string) {
   return createdAt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function getGalleryColumns() {
-  if (typeof window === "undefined") {
-    return 2;
-  }
-  if (window.innerWidth >= 1024) {
-    return 5;
-  }
-  if (window.innerWidth >= 768) {
-    return 3;
-  }
-  return 2;
-}
-
 function revokeObjectUrls(images: SelectedGalleryImage[]) {
   images.forEach((image) => {
     if (image.previewUrl.startsWith("blob:")) {
@@ -91,16 +78,6 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   const [ordersTotal, setOrdersTotal] = useState(0);
   const [isLoadingOrders, setIsLoadingOrders] = useState(user.role === "admin");
   const [ordersError, setOrdersError] = useState("");
-  const [galleryColumns, setGalleryColumns] = useState(getGalleryColumns);
-  const [isSavingOrder, setIsSavingOrder] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => setGalleryColumns(getGalleryColumns());
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   useEffect(() => {
     return () => {
       revokeObjectUrls(selectedImages);
@@ -244,7 +221,6 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
 
   const saveOrder = async (orderedItems: GalleryItem[]) => {
     try {
-      setIsSavingOrder(true);
       setGalleryError("");
       setGalleryMessage("");
       await galleryApi.reorder(token, orderedItems.map((item) => item.id));
@@ -253,7 +229,6 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
     } catch (nextError) {
       setGalleryError(nextError instanceof Error ? nextError.message : "Unable to save order.");
     } finally {
-      setIsSavingOrder(false);
     }
   };
 
@@ -312,8 +287,6 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   };
 
   const totalPages = Math.max(1, Math.ceil(ordersTotal / 10));
-  const editGalleryGridColumns = `repeat(${galleryColumns}, minmax(0, 1fr))`;
-
   const moveEditingImage = (imageId: number, direction: -1 | 1) => {
     setEditingImageIds((current) => {
       const currentIndex = current.findIndex((id) => id === imageId);
@@ -331,102 +304,100 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
   };
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <div style={{ display: "grid", gap: 8, maxWidth: 680 }}>
-        <h3 style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontSize: "clamp(1.6rem, 4vw, 2.2rem)", fontWeight: 500 }}>Profile</h3>
+    <section className="d-grid gap-4">
+      <div>
+        <h3 className="h2 mb-0">Profile</h3>
       </div>
-      <div style={{ display: "grid", gap: 12, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-        <p style={{ margin: 0, color: "var(--muted)" }}>Name: {user.name}</p>
-        <p style={{ margin: 0, color: "var(--muted)" }}>Email: {user.email}</p>
-        <p style={{ margin: 0, color: "var(--muted)" }}>Role: {user.role}</p>
+      <div className="card p-3 d-grid gap-2">
+        <p className="text-muted mb-0">Name: {user.name}</p>
+        <p className="text-muted mb-0">Email: {user.email}</p>
+        {/* <p style={{ margin: 0, color: "var(--muted)" }}>Role: {user.role}</p> */}
       </div>
 
       {user.role === "admin" ? (
         <>
-          <section style={{ display: "grid", gap: 12 }}>
+          <section className="d-grid gap-3">
             <div>
-              <h3 style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontSize: "clamp(1.35rem, 3vw, 1.8rem)", fontWeight: 500 }}>Admin Tools</h3>
+              <h3 className="h4 mb-0">Admin Tools</h3>
             </div>
 
-            <details open={isEditing} style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-              <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>{isEditing ? "Edit Gallery Item" : "Create Gallery Item"}</summary>
-              <div style={{ display: "grid", gap: 12, padding: 16, borderTop: "1px solid var(--line)" }}>
-                <form onSubmit={handleGallerySubmit} style={{ display: "grid", gap: 12 }}>
-                  <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }} />
-                  <textarea value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem", resize: "vertical" }} />
-                  <input value={draft.price} onChange={(event) => setDraft((current) => ({ ...current, price: event.target.value }))} placeholder="Optional price in dollars" inputMode="decimal" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }} />
-                  <label style={{ display: "grid", gap: 8, color: "var(--muted)" }}>
-                    <span>{isEditing ? "Replace artwork images" : "Artwork images"} (up to 5)</span>
-                    <input type="file" accept="image/*" multiple onChange={handleUpload} />
+            <details open={isEditing} className="card overflow-hidden">
+              <summary className="p-3 fw-bold">{isEditing ? "Edit Gallery Item" : "Create Gallery Item"}</summary>
+              <div className="p-3 border-top">
+                <form onSubmit={handleGallerySubmit} className="d-grid gap-3">
+                  <input className="form-control" value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" />
+                  <textarea className="form-control" value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Description" rows={4} />
+                  <input className="form-control" type="number" min="0" step="0.01" value={draft.price} onChange={(event) => { const value = event.target.value; if (/^\d*(\.\d{0,2})?$/.test(value)) { setDraft((current) => ({ ...current, price: value })); } }} placeholder="Optional price in dollars" inputMode="decimal" />
+                  <label className="form-label text-muted mb-0">
+                    <span className="d-block mb-2">{isEditing ? "Replace artwork images" : "Artwork images"} (up to 5)</span>
+                    <input className="form-control" type="file" accept="image/*" multiple onChange={handleUpload} />
                   </label>
                   {selectedImages.length ? (
-                    <div style={{ display: "grid", gap: 12, padding: 14, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.82)" }}>
-                      <div style={{ display: "grid", gap: 8 }}>
-                        <p style={{ margin: 0, color: "var(--text-dark)", fontWeight: 700 }}>Selected images</p>
-                        <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>Gallery cards use a 4:3 cover frame. The detail page shows the full image.</p>
+                    <div className="card p-3 d-grid gap-3">
+                      <div>
+                        <p className="fw-bold mb-1">Selected images</p>
+                        <p className="text-muted small mb-0">Gallery cards use a 4:3 cover frame. The detail page shows the full image.</p>
                       </div>
-                      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(72px, 96px))" }}>
+                      <div className="row row-cols-2 row-cols-sm-4 row-cols-md-6 g-2">
                         {selectedImages.map((image, index) => (
-                          <div key={image.previewUrl} style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, padding: 0, background: "var(--paper)" }}>
-                            <img src={image.previewUrl} alt={`Selected preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", background: "var(--linen)" }} />
+                          <div key={image.previewUrl} className="col"><div className="border rounded overflow-hidden"><img className="gallery-cover" src={image.previewUrl} alt={`Selected preview ${index + 1}`} /></div>
                           </div>
                         ))}
                       </div>
                     </div>
                   ) : orderedEditingImages.length ? (
-                    <div style={{ display: "grid", gap: 10 }}>
-                      <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>The first image is the cover image across the gallery and order pages.</p>
-                      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(132px, 1fr))" }}>
+                    <div className="d-grid gap-2">
+                      <p className="text-muted small mb-0">The first image is the cover image across the gallery and order pages.</p>
+                      <div className="row row-cols-2 row-cols-sm-4 row-cols-md-6 g-2">
                         {orderedEditingImages.map((image, index) => (
-                          <div key={image.id} style={{ display: "grid", gap: 8, padding: 10, border: "1px solid var(--line)", borderRadius: 8, background: "rgba(255, 253, 248, 0.82)" }}>
-                            <img src={image.imageUrl} alt={`Selected preview ${index + 1}`} style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 8, background: "var(--linen)" }} />
-                            <p style={{ margin: 0, color: "var(--text-dark)", fontSize: "0.85rem", fontWeight: 700 }}>Image {index + 1}{index === 0 ? " (Cover)" : ""}</p>
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <button type="button" onClick={() => moveEditingImage(image.id, -1)} disabled={index === 0 || isSavingGallery} style={{ flex: 1, border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "8px 10px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800, opacity: index === 0 || isSavingGallery ? 0.5 : 1 }}>Up</button>
-                              <button type="button" onClick={() => moveEditingImage(image.id, 1)} disabled={index === orderedEditingImages.length - 1 || isSavingGallery} style={{ flex: 1, border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "8px 10px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800, opacity: index === orderedEditingImages.length - 1 || isSavingGallery ? 0.5 : 1 }}>Down</button>
+                          <div key={image.id} className="col"><div className="card p-2 d-grid gap-2">
+                            <img className="gallery-cover" src={image.imageUrl} alt={`Selected preview ${index + 1}`} />
+                            <p className="small fw-bold mb-0">Image {index + 1}{index === 0 ? " (Cover)" : ""}</p>
+                            <div className="d-flex gap-2">
+                              <button className="btn btn-outline-secondary btn-sm flex-fill" type="button" onClick={() => moveEditingImage(image.id, -1)} disabled={index === 0 || isSavingGallery}>Up</button>
+                              <button className="btn btn-outline-secondary btn-sm flex-fill" type="button" onClick={() => moveEditingImage(image.id, 1)} disabled={index === orderedEditingImages.length - 1 || isSavingGallery}>Down</button>
                             </div>
-                          </div>
+                          </div></div>
                         ))}
                       </div>
                     </div>
                   ) : null}
-                  {galleryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{galleryError}</p> : null}
-                  {galleryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{galleryMessage}</p> : null}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                    <button type="submit" disabled={isSavingGallery} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)", opacity: isSavingGallery ? 0.7 : 1 }}>{isSavingGallery ? "Saving..." : isEditing ? "Update item" : "Create item"}</button>
-                    {isEditing ? <button type="button" onClick={resetDraft} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel edit</button> : null}
+                  {galleryError ? <p className="text-danger mb-0">{galleryError}</p> : null}
+                  {galleryMessage ? <p className="text-success mb-0">{galleryMessage}</p> : null}
+                  <div className="d-flex flex-wrap gap-2">
+                    <button className="btn btn-primary" type="submit" disabled={isSavingGallery}>{isSavingGallery ? "Saving..." : isEditing ? "Update item" : "Create item"}</button>
+                    {isEditing ? <button className="btn btn-outline-secondary" type="button" onClick={resetDraft}>Cancel edit</button> : null}
                   </div>
                 </form>
               </div>
             </details>
 
-            <details style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-              <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Existing Gallery</summary>
-              <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid var(--line)" }}>
-                {isLoadingItems ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading admin gallery...</p> : null}
+            <details className="card overflow-hidden">
+              <summary className="p-3 fw-bold">Existing Gallery</summary>
+              <div className="p-3 border-top d-grid gap-3">
+                {isLoadingItems ? <p className="text-muted">Loading admin gallery...</p> : null}
                 {!isLoadingItems ? (
-                  <div style={{ display: "grid", gap: 12 }}>
-                    <div style={{ display: "grid", gap: 12, gridTemplateColumns: editGalleryGridColumns }}>
+                  <div className="d-grid gap-3">
+                    <div className="row row-cols-1 row-cols-md-3 row-cols-xl-5 g-3">
                       {items.map((item) => (
-                        <article key={item.id} draggable onDragStart={() => setDraggingId(item.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(item.id)} style={{ position: "relative", display: "grid", gap: 10, minHeight: 148, padding: 14, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+                        <article key={item.id} className="col"><div className="card h-100 p-3 d-grid gap-3" draggable onDragStart={() => setDraggingId(item.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => handleDrop(item.id)}>
                           <span style={{ position: "absolute", top: 12, right: 12, color: "var(--leaf-700)", fontSize: "1rem", fontWeight: 700, letterSpacing: 1, cursor: "grab" }} aria-hidden="true">⋮⋮</span>
                           <div style={{ display: "grid", gap: 6, paddingRight: 24 }}>
                             <p style={{ margin: 0, fontWeight: 700 }}>{item.title}</p>
                             {item.isSold ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase" }}>Sold</p> : null}
-                            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{isSavingOrder ? "Saving order..." : "Drag to reorder"}</p>
                           </div>
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignSelf: "end", alignItems: "center" }}>
-                            <button type="button" onClick={() => { revokeObjectUrls(selectedImages); setEditingId(item.id); setEditingImageIds(item.images.map((image) => image.id)); setDraft({ title: item.title, description: item.description, price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImages([]); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Edit</button>
+                          <div className="d-flex flex-wrap gap-2 align-self-end align-items-center">
+                            <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => { revokeObjectUrls(selectedImages); setEditingId(item.id); setEditingImageIds(item.images.map((image) => image.id)); setDraft({ title: item.title, description: item.description, price: item.priceCents !== null ? (item.priceCents / 100).toFixed(2) : "" }); setSelectedImages([]); }}>Edit</button>
                             {pendingDeleteId === item.id ? (
                               <>
-                                <button type="button" onClick={() => void handleDelete(item.id)} disabled={deletingId === item.id} style={{ border: "1px solid var(--danger)", borderRadius: 8, padding: "10px 12px", background: "var(--danger)", color: "var(--paper)", fontWeight: 800, opacity: deletingId === item.id ? 0.7 : 1 }}>{deletingId === item.id ? "Deleting..." : "Confirm delete"}</button>
-                                <button type="button" onClick={() => setPendingDeleteId(null)} disabled={deletingId === item.id} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--leaf-900)", fontWeight: 800 }}>Cancel</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => void handleDelete(item.id)} disabled={deletingId === item.id}>{deletingId === item.id ? "Deleting..." : "Confirm delete"}</button>
+                                <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => setPendingDeleteId(null)} disabled={deletingId === item.id}>Cancel</button>
                               </>
                             ) : (
-                              <button type="button" onClick={() => setPendingDeleteId(item.id)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--danger)", fontWeight: 800 }}>Delete</button>
+                              <button className="btn btn-outline-danger btn-sm" type="button" onClick={() => setPendingDeleteId(item.id)}>Delete</button>
                             )}
                           </div>
-                        </article>
+                        </div></article>
                       ))}
                     </div>
                   </div>
@@ -434,43 +405,43 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
               </div>
             </details>
 
-            <details style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-              <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>Services</summary>
-              <div style={{ display: "grid", gap: 12, padding: 16, borderTop: "1px solid var(--line)" }}>
-                <form onSubmit={handleCategorySubmit} style={{ display: "grid", gap: 12 }}>
-                  <input value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="Service name" style={{ width: "100%", padding: 14, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "1rem" }} />
-                  {categoryError ? <p style={{ margin: 0, color: "var(--danger)" }}>{categoryError}</p> : null}
-                  {categoryMessage ? <p style={{ margin: 0, color: "var(--success)" }}>{categoryMessage}</p> : null}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                    <button type="submit" style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>{editingCategoryId !== null ? "Update service" : "Create service"}</button>
-                    {editingCategoryId !== null ? <button type="button" onClick={() => { setEditingCategoryId(null); setCategoryName(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel edit</button> : null}
+            <details className="card overflow-hidden">
+              <summary className="p-3 fw-bold">Existing Services</summary>
+              <div className="p-3 border-top d-grid gap-3">
+                <form onSubmit={handleCategorySubmit} className="d-grid gap-3">
+                  <input className="form-control" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="Create a service" />
+                  {categoryError ? <p className="text-danger mb-0">{categoryError}</p> : null}
+                  {categoryMessage ? <p className="text-success mb-0">{categoryMessage}</p> : null}
+                  <div className="d-flex flex-wrap gap-2">
+                    <button className="btn btn-primary" type="submit">{editingCategoryId !== null ? "Update service" : "Create service"}</button>
+                    {editingCategoryId !== null ? <button className="btn btn-outline-secondary" type="button" onClick={() => { setEditingCategoryId(null); setCategoryName(""); }}>Cancel edit</button> : null}
                   </div>
                 </form>
-                <div style={{ display: "grid", gap: 12 }}>
+                <div className="row row-cols-1 row-cols-md-2 g-3">
                   {categories.map((category) => (
-                    <div key={category.id} style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-                      <p style={{ margin: 0, fontWeight: 700 }}>{category.name}</p>
-                      <p style={{ margin: 0, color: "var(--muted)" }}>{category.isArchived ? "Archived" : "Active"}</p>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                        <button type="button" onClick={() => { setEditingCategoryId(category.id); setCategoryName(category.name); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Edit</button>
-                        <button type="button" onClick={() => void toggleArchiveCategory(category)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>{category.isArchived ? "Restore" : "Archive"}</button>
+                    <div key={category.id} className="col"><div className="card p-3 d-grid gap-2">
+                      <p className="fw-bold mb-0">{category.name}</p>
+                      <p className="text-muted mb-0">{category.isArchived ? "Archived" : "Active"}</p>
+                      <div className="d-flex flex-wrap gap-2">
+                        <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => { setEditingCategoryId(category.id); setCategoryName(category.name); }}>Edit</button>
+                        <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => void toggleArchiveCategory(category)}>{category.isArchived ? "Restore" : "Archive"}</button>
                       </div>
-                    </div>
+                    </div></div>
                   ))}
                 </div>
               </div>
             </details>
           </section>
 
-          <details style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-            <summary style={{ padding: 16, cursor: "pointer", color: "var(--text-dark)", fontFamily: "var(--serif)", fontWeight: 700 }}>All Orders</summary>
-            <div style={{ display: "grid", gap: 16, padding: 16, borderTop: "1px solid var(--line)" }}>
-              {ordersError ? <p style={{ margin: 0, color: "var(--danger)" }}>{ordersError}</p> : null}
-              {isLoadingOrders ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading orders...</p> : null}
+          <details className="card overflow-hidden">
+            <summary className="p-3 fw-bold">All Orders</summary>
+            <div className="p-3 border-top d-grid gap-3">
+              {ordersError ? <p className="text-danger">{ordersError}</p> : null}
+              {isLoadingOrders ? <p className="text-muted">Loading orders...</p> : null}
               {!isLoadingOrders ? (
-                <div style={{ display: "grid", gap: 12 }}>
+                <div className="row row-cols-1 row-cols-lg-2 g-3">
                   {orders.map((order) => (
-                    <article key={order.orderNumber} style={{ display: "grid", gap: 8, padding: 16, border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-panel)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
+                    <article key={order.orderNumber} className="col"><div className="card h-100 p-3 d-grid gap-2">
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
                         <p style={{ margin: 0, fontWeight: 700 }}>Order {order.orderNumber}</p>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
@@ -489,22 +460,22 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
                       <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>{order.customerEmail}</p>
                       <p style={{ margin: 0, color: "var(--muted)" }}>Status: {order.status}</p>
                       {order.amountCents !== null ? <p style={{ margin: 0, color: "var(--muted)" }}>Amount: {(order.amountCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}</p> : null}
-                      {order.canOpen ? <button type="button" onClick={() => onOpenOrder(order.orderNumber)} style={{ justifySelf: "start", border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>Open order</button> : null}
-                    </article>
+                      {order.canOpen ? <button className="btn btn-primary btn-sm" type="button" onClick={() => onOpenOrder(order.orderNumber)}>Open order</button> : null}
+                    </div></article>
                   ))}
                 </div>
               ) : null}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                <button type="button" disabled={ordersPage === 1} onClick={() => setOrdersPage((current) => current - 1)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Previous</button>
-                <p style={{ margin: 0, color: "var(--muted)" }}>Page {ordersPage} of {totalPages}</p>
-                <button type="button" disabled={ordersPage >= totalPages} onClick={() => setOrdersPage((current) => current + 1)} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Next</button>
+              <div className="d-flex flex-wrap gap-2 align-items-center">
+                <button className="btn btn-outline-secondary btn-sm" type="button" disabled={ordersPage === 1} onClick={() => setOrdersPage((current) => current - 1)}>Previous</button>
+                <p className="text-muted mb-0">Page {ordersPage} of {totalPages}</p>
+                <button className="btn btn-outline-secondary btn-sm" type="button" disabled={ordersPage >= totalPages} onClick={() => setOrdersPage((current) => current + 1)}>Next</button>
               </div>
             </div>
           </details>
         </>
       ) : null}
 
-      <button type="button" onClick={onLogout} style={{ justifySelf: "start", border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "12px 14px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Logout</button>
+      <button className="btn btn-outline-secondary" type="button" onClick={onLogout}>Logout</button>
     </section>
   );
 }

@@ -42,8 +42,6 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
     : items.length
     ? Array.from({ length: Math.min(itemsPerSlide, items.length) }, (_, index) => items[(currentSlide * itemsPerSlide + index) % items.length])
     : [];
-  const galleryColumns = mode === "full" ? "repeat(auto-fit, minmax(min(100%, 260px), 1fr))" : `repeat(${Math.min(itemsPerSlide, Math.max(visibleItems.length, 1))}, minmax(0, 1fr))`;
-
   const handleBuy = async (itemId: number) => {
     try {
       setIsStartingCheckout(true);
@@ -140,30 +138,31 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
   }, [items.length, itemsPerSlide, mode, slideCount]);
 
   return (
-    <section id="gallery" style={{ display: "grid", gap: 16 }}>
-      <div style={{ display: "grid", gap: 8, maxWidth: 680 }}>
-        <p style={{ margin: 0, color: "var(--text-dark)", fontFamily: "var(--serif)", fontSize: "clamp(1.65rem, 5vw, 2.55rem)", fontWeight: 500 }}>Gallery</p>
+    <section id="gallery" className="row g-3">
+      <div className="col-12">
+        <h2 className="h2 mb-0">Gallery</h2>
       </div>
-      {isLoading ? <p style={{ margin: 0, color: "var(--muted)" }}>Loading gallery...</p> : null}
-      {error ? <p style={{ margin: 0, color: "var(--danger)" }}>{error}</p> : null}
-      {!isLoading && !error && items.length === 0 ? <p style={{ margin: 0, color: "var(--muted)" }}>No gallery items are published yet.</p> : null}
+      {isLoading ? <p className="text-muted">Loading gallery...</p> : null}
+      {error ? <p className="text-danger">{error}</p> : null}
+      {!isLoading && !error && items.length === 0 ? <p className="text-muted">No gallery items are published yet.</p> : null}
       {!isLoading && !error && items.length > 0 ? (
-        <div style={{ display: "grid", gap: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: galleryColumns, gap: 12 }}>
+        <div className="col-12 d-grid gap-3">
+          <div className={mode === "full" ? "row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3" : "row g-3"}>
           {visibleItems.map((item) => (
-            <article key={item.id} style={{ overflow: "hidden", border: "1px solid var(--line)", borderRadius: 8, background: "var(--bg-gallery-item)", boxShadow: "0 10px 30px rgba(31, 51, 40, 0.08)" }}>
-              <button type="button" onClick={() => onOpenItem?.(item.id)} style={{ display: "block", width: "100%", padding: 0, border: 0, background: "transparent", cursor: onOpenItem ? "pointer" : "default" }}>
-                <img src={item.imageUrl} alt={item.title} style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", background: "var(--linen)" }} />
+            <article key={item.id} className={mode === "full" ? "col" : itemsPerSlide === 1 ? "col-12" : "col-12 col-md-4"}>
+              <div className="card h-100 overflow-hidden">
+              <button className="p-0 border-0 bg-transparent" type="button" onClick={() => onOpenItem?.(item.id)}>
+                <img className="gallery-cover" src={item.imageUrl} alt={item.title} />
               </button>
-              <div style={{ display: "grid", gap: 10, padding: 16 }}>
-                <button type="button" onClick={() => onOpenItem?.(item.id)} style={{ width: "fit-content", padding: 0, border: 0, background: "transparent", color: "var(--text-dark)", fontWeight: 700, fontSize: "1rem", textAlign: "left", cursor: onOpenItem ? "pointer" : "default" }}>{item.title}</button>
-                <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.5 }}>{item.description}</p>
+              <div className="card-body d-grid gap-2">
+                <button className="btn btn-link p-0 text-start text-decoration-none fw-bold" type="button" onClick={() => onOpenItem?.(item.id)}>{item.title}</button>
+                <p className="card-text text-muted mb-0">{item.description}</p>
                 {item.priceCents !== null ? (
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-                    <p style={{ margin: 0, color: "var(--text-dark)", fontWeight: 700 }}>{formatCurrency(item.priceCents)}</p>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <button type="button" onClick={() => setInquiryItemId((current) => current === item.id ? null : item.id)} aria-label="Ask a question" title="Ask a question" style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>💬</button>
-                      <button type="button" onClick={() => setCheckoutItemId((current) => current === item.id ? null : item.id)} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>Buy</button>
+                  <div className="d-flex justify-content-between gap-2 align-items-center">
+                    <p className="mb-0 fw-bold">{formatCurrency(item.priceCents)}</p>
+                    <div className="d-flex gap-2 align-items-center">
+                      <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => setInquiryItemId((current) => current === item.id ? null : item.id)} aria-label="Ask a question" title="Ask a question">💬</button>
+                      <button className="btn btn-primary btn-sm" type="button" onClick={() => setCheckoutItemId((current) => current === item.id ? null : item.id)}>Buy</button>
                     </div>
                   </div>
                 ) : null}
@@ -171,20 +170,21 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
                   <GalleryCheckoutForm isStartingCheckout={isStartingCheckout} onStartCheckout={() => void handleBuy(item.id)} onCancel={() => setCheckoutItemId(null)} />
                 ) : null}
                 {inquiryItemId === item.id ? (
-                  <div style={{ display: "grid", gap: 8 }}>
-                    <input value={inquiryEmail} onChange={(event) => setInquiryEmail(normalizeEmailInput(event.target.value))} placeholder="Your email" type="email" autoCapitalize="none" autoCorrect="off" inputMode="email" style={{ width: "100%", padding: 12, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "0.95rem" }} />
-                    <textarea value={inquiryBody} onChange={(event) => setInquiryBody(event.target.value)} placeholder="Ask a question" rows={3} style={{ width: "100%", padding: 12, border: "1px solid rgba(63, 95, 72, 0.28)", borderRadius: 8, background: "rgba(255, 253, 248, 0.94)", color: "var(--text-dark)", fontSize: "0.95rem", resize: "vertical" }} />
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                      <button type="button" onClick={() => void handleInquiry(item.id)} disabled={isSendingInquiry} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "10px 12px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800 }}>{isSendingInquiry ? "Sending..." : "Send question"}</button>
-                      <button type="button" onClick={() => { setInquiryItemId(null); setInquiryEmail(""); setInquiryBody(""); }} style={{ border: "1px solid rgba(63, 95, 72, 0.34)", borderRadius: 8, padding: "10px 12px", background: "rgba(255, 253, 248, 0.82)", color: "var(--text-dark)", fontWeight: 800 }}>Cancel</button>
+                  <div className="d-grid gap-2">
+                    <input className="form-control" value={inquiryEmail} onChange={(event) => setInquiryEmail(normalizeEmailInput(event.target.value))} placeholder="Your email" type="email" autoCapitalize="none" autoCorrect="off" inputMode="email" />
+                    <textarea className="form-control" value={inquiryBody} onChange={(event) => setInquiryBody(event.target.value)} placeholder="Ask a question" rows={3} />
+                    <div className="d-flex gap-2 flex-wrap">
+                      <button className="btn btn-primary btn-sm" type="button" onClick={() => void handleInquiry(item.id)} disabled={isSendingInquiry}>{isSendingInquiry ? "Sending..." : "Send question"}</button>
+                      <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => { setInquiryItemId(null); setInquiryEmail(""); setInquiryBody(""); }}>Cancel</button>
                     </div>
                   </div>
                 ) : null}
               </div>
+              </div>
             </article>
           ))}
           </div>
-          {mode === "preview" && onOpenFullGallery ? <button type="button" onClick={onOpenFullGallery} style={{ justifySelf: "start", border: 0, background: "transparent", color: "var(--text-dark)", padding: 0, marginBottom: 16, fontWeight: 800, textDecoration: "underline", textDecorationColor: "rgba(85, 116, 91, 0.35)", textUnderlineOffset: 4 }}>View Full Gallery</button> : null}
+          {mode === "preview" && onOpenFullGallery ? <button className="btn btn-link p-0 text-start fw-bold" type="button" onClick={onOpenFullGallery}>View Full Gallery</button> : null}
         </div>
       ) : null}
     </section>

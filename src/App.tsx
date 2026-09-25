@@ -13,7 +13,7 @@ type AppView = "home" | "gallery" | "gallery_item" | "login" | "profile" | "orde
 
 function parseRoute(): { view: AppView; orderNumber: string; galleryItemId: number | null } {
   const pathname = window.location.pathname;
-  if (pathname === "/admin" || pathname === "/admin/sign-in") {
+  if (pathname === "/admin") {
     return { view: "login", orderNumber: "", galleryItemId: null };
   }
 
@@ -156,7 +156,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: "100vh" }}>
+    <div className="min-vh-100">
       <Navigation
         isAuthenticated={Boolean(user)}
         onGalleryClick={showFullGallery}
@@ -164,26 +164,26 @@ export default function App() {
         onHomeClick={showHome}
         onProfileClick={showProfile}
       />
-      <main style={{ display: "grid", gap: "clamp(22px, 4vw, 42px)", width: "min(100%, 1120px)", margin: "0 auto", padding: "22px clamp(16px, 4vw, 34px) 56px" }}>
-        {authError ? <p style={{ margin: 0, color: "var(--danger)" }}>{authError}</p> : null}
+      <main className="container py-4 py-md-5">
+        {authError ? <p className="text-danger mb-4">{authError}</p> : null}
         {view === "home" ? (
-          <>
-            <section aria-label="Kyra's Creations" style={{ position: "relative", minHeight: "clamp(300px, 42vh, 720px)", overflow: "hidden", display: "grid", alignItems: "end", borderRadius: "0 0 28px 28px", backgroundImage: "linear-gradient(90deg, rgba(31, 51, 40, 0.78) 0%, rgba(31, 51, 40, 0.48) 38%, rgba(31, 51, 40, 0.08) 72%), url('/assets/nature-studio-hero.png')", backgroundPosition: "center", backgroundSize: "cover", boxShadow: "var(--shadow)" }}>
-              <div style={{ display: "grid", gap: 18, maxWidth: 620, padding: "clamp(28px, 7vw, 72px)", color: "var(--text-light)" }}>
-                <h1 style={{ margin: 0, fontFamily: "var(--serif)", fontSize: "clamp(3.4rem, 11vw, 7.4rem)", lineHeight: 0.88, fontWeight: 500 }}>Kyra&apos;s Creations</h1>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-                  <button type="button" onClick={() => showHome("commission")} style={{ border: "1px solid var(--leaf-800)", borderRadius: 8, padding: "14px 16px", background: "var(--leaf-800)", color: "var(--text-light)", fontWeight: 800, boxShadow: "0 12px 28px rgba(31, 51, 40, 0.18)" }}>Request a commission</button>
-                  <button type="button" onClick={showFullGallery} style={{ border: "1px solid rgba(255, 253, 248, 0.42)", borderRadius: 8, padding: "14px 16px", background: "rgba(255, 253, 248, 0.14)", color: "var(--text-light)", fontWeight: 800, backdropFilter: "blur(8px)" }}>View gallery</button>
+          <div className="d-grid gap-5">
+            <section aria-label="Kyra's Creations" className="hero rounded-bottom-4 d-flex align-items-end">
+              <div className="text-light p-4 p-md-5">
+                <h1 className="hero-title">Kyra&apos;s Creations</h1>
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                  <button className="btn btn-primary" type="button" onClick={() => showHome("commission")}>Request a commission</button>
+                  <button className="btn btn-outline-light" type="button" onClick={showFullGallery}>View gallery</button>
                 </div>
               </div>
             </section>
-            <div ref={galleryRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
+            <div ref={galleryRef} className="scroll-target">
               <GalleryPreview refreshToken={galleryRefreshToken} onOpenFullGallery={showFullGallery} onOpenItem={openGalleryItem} onOpenOrder={openOrder} />
             </div>
-            <div ref={commissionRef} style={{ scrollMarginTop: "var(--scroll-target-offset)" }}>
+            <div ref={commissionRef} className="scroll-target">
               <CommissionRequestForm onOrderCreated={openOrder} />
             </div>
-          </>
+          </div>
         ) : null}
         {view === "gallery" ? <GalleryPage onOpenItem={openGalleryItem} onOpenOrder={openOrder} /> : null}
         {view === "gallery_item" && galleryItemId !== null ? <GalleryItemPage itemId={galleryItemId} onBackToGallery={showFullGallery} onOpenOrder={openOrder} /> : null}
