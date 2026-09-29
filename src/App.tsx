@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { authApi, User } from "./api";
 import AuthPanel from "./components/AuthPanel";
 import CommissionRequestForm from "./components/CommissionRequestForm";
@@ -41,8 +41,6 @@ function parseRoute(): { view: AppView; orderNumber: string; galleryItemId: numb
 
 export default function App() {
   const initialRoute = parseRoute();
-  const galleryRef = useRef<HTMLDivElement | null>(null);
-  const commissionRef = useRef<HTMLDivElement | null>(null);
   const [view, setView] = useState<AppView>(initialRoute.view);
   const [orderNumber, setOrderNumber] = useState(initialRoute.orderNumber);
   const [galleryItemId, setGalleryItemId] = useState<number | null>(initialRoute.galleryItemId);
@@ -50,7 +48,6 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authError, setAuthError] = useState("");
   const [galleryRefreshToken, setGalleryRefreshToken] = useState(0);
-  const [pendingScroll, setPendingScroll] = useState<"gallery" | "commission" | null>(null);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -94,22 +91,11 @@ export default function App() {
     setView("profile");
   }, [user, view]);
 
-  useEffect(() => {
-    if (view !== "home" || !pendingScroll) {
-      return;
-    }
-
-    const target = pendingScroll === "gallery" ? galleryRef.current : commissionRef.current;
-    target?.scrollIntoView({ behavior: "smooth", block: "start" });
-    setPendingScroll(null);
-  }, [pendingScroll, view]);
-
-  const showHome = (section: "gallery" | "commission" | null = null) => {
+  const showHome = () => {
     window.history.pushState({}, "", "/");
     setView("home");
     setOrderNumber("");
     setGalleryItemId(null);
-    setPendingScroll(section);
   };
 
   const showProfile = () => {
@@ -124,7 +110,6 @@ export default function App() {
     setView("gallery");
     setOrderNumber("");
     setGalleryItemId(null);
-    setPendingScroll(null);
   };
 
   const openGalleryItem = (itemId: number) => {
@@ -160,7 +145,7 @@ export default function App() {
       <Navigation
         isAuthenticated={Boolean(user)}
         onGalleryClick={showFullGallery}
-        onCommissionClick={() => showHome("commission")}
+        onCommissionClick={showHome}
         onHomeClick={showHome}
         onProfileClick={showProfile}
       />
@@ -168,19 +153,19 @@ export default function App() {
         {authError ? <p className="text-danger mb-4">{authError}</p> : null}
         {view === "home" ? (
           <div className="d-grid gap-5">
-            <section aria-label="Kyra's Creations" className="hero rounded-bottom-4 d-flex align-items-end">
+            <section className="hero rounded-bottom-4 d-flex align-items-end">
               <div className="text-light p-4 p-md-5">
                 <h1 className="hero-title">Kyra&apos;s Creations</h1>
                 <div className="d-flex flex-wrap align-items-center gap-2">
-                  <button className="btn btn-primary" type="button" onClick={() => showHome("commission")}>Request a commission</button>
+                  <button className="btn btn-primary" type="button" onClick={showHome}>Request a commission</button>
                   <button className="btn btn-outline-light" type="button" onClick={showFullGallery}>View gallery</button>
                 </div>
               </div>
             </section>
-            <div ref={galleryRef} className="scroll-target">
+            <div>
               <GalleryPreview refreshToken={galleryRefreshToken} onOpenFullGallery={showFullGallery} onOpenItem={openGalleryItem} onOpenOrder={openOrder} />
             </div>
-            <div ref={commissionRef} className="scroll-target">
+            <div>
               <CommissionRequestForm onOrderCreated={openOrder} />
             </div>
           </div>

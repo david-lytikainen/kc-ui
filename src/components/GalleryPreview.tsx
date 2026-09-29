@@ -86,7 +86,7 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
 
         const nextItems = await galleryApi.listPublic();
         if (isActive) {
-          setItems(nextItems);
+          setItems(nextItems.filter((item) => item.isPublished));
           setCurrentSlide(0);
         }
       } catch (nextError) {
@@ -161,7 +161,7 @@ export default function GalleryPreview({ mode = "preview", refreshToken = 0, onO
                   <div className="d-flex justify-content-between gap-2 align-items-center">
                     <p className="mb-0 fw-bold">{formatCurrency(item.priceCents)}</p>
                     <div className="d-flex gap-2 align-items-center">
-                      <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => setInquiryItemId((current) => current === item.id ? null : item.id)} aria-label="Ask a question" title="Ask a question">💬</button>
+                      <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => setInquiryItemId((current) => current === item.id ? null : item.id)}>💬</button>
                       <button className="btn btn-primary btn-sm" type="button" onClick={() => setCheckoutItemId((current) => current === item.id ? null : item.id)}>Buy</button>
                     </div>
                   </div>

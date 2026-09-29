@@ -282,7 +282,7 @@ export default function OrderPage({ orderNumber, token, onBackHome }: OrderPageP
         <div className="d-flex flex-wrap gap-2 align-items-center">
           <h2 className="h2 mb-0">{order.customerName}</h2>
           {order.customerConfirmedAt ? (
-            <span title="Customer confirmed receipt" aria-label="Customer confirmed receipt" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 28, height: 28, borderRadius: 999, background: "rgba(47, 133, 90, 0.16)", color: "var(--success)", fontWeight: 900 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 28, height: 28, borderRadius: 999, background: "rgba(47, 133, 90, 0.16)", color: "var(--success)", fontWeight: 900 }}>
               ✓
             </span>
           ) : null}
