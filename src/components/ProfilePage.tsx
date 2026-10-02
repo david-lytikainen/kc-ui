@@ -497,7 +497,7 @@ export default function ProfilePage({ token, user, onGalleryChanged, onOpenOrder
         </>
       ) : null}
 
-      <button className="w-25 btn btn-outline-secondary" type="button" onClick={onLogout}>Logout</button>
+      <button className="w-25 btn btn-light" type="button" onClick={onLogout}>Logout</button>
     </section>
   );
 }
